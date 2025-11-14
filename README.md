@@ -193,9 +193,18 @@ pytest tests/ -v --cov=app --cov-report=html
 
 ## 🚢 Deployment
 
-### Azure Container Apps
+The application is designed to be deployed on Microsoft Azure. See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment instructions.
 
-1. **Build and push images**
+### Quick Deploy to Azure Container Apps
+
+1. **Provision Azure Resources**
+```bash
+# Run automated setup script
+chmod +x scripts/setup_azure.sh
+./scripts/setup_azure.sh
+```
+
+2. **Build and Push Docker Images**
 ```bash
 # Login to Azure Container Registry
 az acr login --name <your-acr-name>
@@ -209,10 +218,25 @@ docker build -t <your-acr>.azurecr.io/third-eye-worker:latest -f docker/Dockerfi
 docker push <your-acr>.azurecr.io/third-eye-worker:latest
 ```
 
-2. **Deploy via GitHub Actions**
-- Configure secrets in GitHub repository
+3. **Deploy Containers**
+```bash
+# Deploy using Azure CLI (see DEPLOYMENT.md for full commands)
+az containerapp create --name third-eye-api ...
+az containerapp create --name third-eye-worker ...
+```
+
+4. **Automated Deployment via GitHub Actions**
+- Configure Azure credentials in GitHub repository secrets
 - Push to main branch
-- CI/CD pipeline will automatically deploy
+- CI/CD pipeline will automatically build and deploy
+
+### Deployment Options
+
+- **Azure Container Apps** (Recommended) - Fully managed serverless containers with auto-scaling
+- **Azure App Service** - Simple PaaS deployment with Docker support
+- **Azure Kubernetes Service (AKS)** - Advanced orchestration for complex deployments
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on each deployment method.
 
 ## 📊 Observability
 
