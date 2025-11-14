@@ -1,6 +1,6 @@
 """Text splitting utilities"""
 from typing import List, Dict, Any
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import tiktoken
 
 from app.core.config import settings

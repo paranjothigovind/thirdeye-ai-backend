@@ -9,10 +9,6 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.api import routes_chat, routes_ingest, routes_jobs, routes_health, routes_graph
 
-# For Vercel deployment, use WSGI
-if os.getenv("VERCEL"):
-    from fastapi.middleware.wsgi import WSGIMiddleware
-
 # Setup logging
 setup_logging()
 
@@ -50,21 +46,6 @@ if os.path.exists(static_path):
     async def serve_ui():
         """Serve the main UI"""
         return FileResponse(os.path.join(static_path, "index.html"))
-
-# For Vercel deployment, wrap with WSGI
-if os.getenv("VERCEL"):
-    app = WSGIMiddleware(app)
-
-# For Railway deployment, use dynamic port
-if os.getenv("RAILWAY_ENVIRONMENT"):
-    port = int(os.getenv("PORT", 8000))
-    if __name__ == "__main__":
-        uvicorn.run(
-            "app.main:app",
-            host="0.0.0.0",
-            port=port,
-            reload=False
-        )
 
 if __name__ == "__main__":
     import uvicorn
