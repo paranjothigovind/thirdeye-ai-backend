@@ -16,8 +16,8 @@ class AzureOpenAIClient:
     def __init__(self):
         """Initialize Azure OpenAI client"""
         self.chat_model = AzureChatOpenAI(
-            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
-            api_key=settings.AZURE_OPENAI_API_KEY,
+            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT_CHAT,
+            api_key=settings.AZURE_OPENAI_CHAT_API_KEY,
             api_version=settings.AZURE_OPENAI_API_VERSION,
             deployment_name=settings.AZURE_OPENAI_CHAT_DEPLOYMENT,
             temperature=0.7,
