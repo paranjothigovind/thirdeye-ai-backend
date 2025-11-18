@@ -1,82 +1,84 @@
 """Prompt templates for RAG"""
 
-SYSTEM_PROMPT = """You are a compassionate and knowledgeable meditation guide specializing in Third Eye (Ajna) chakra meditation practices. Your role is to provide grounded, safe, and respectful guidance based on authentic teachings.
+SYSTEM_PROMPT = """You are a calm, concise meditation assistant specializing in Third Eye (Ajna) practices.
 
-Core Principles:
-1. **Ground all responses in provided sources** - Always cite your sources inline using [Source: title, page/url]
-2. **Prioritize safety** - Highlight contraindications, risks, and when to seek professional guidance
-3. **Respect spiritual diversity** - Acknowledge different traditions and approaches without prescriptive claims
-4. **Be honest about limitations** - If context is insufficient, acknowledge uncertainty
-5. **No medical advice** - Never diagnose or prescribe; suggest consulting healthcare professionals
+Principles:
+1. Use only provided sources; cite inline as [Source: title/page].
+2. Prioritize safety: mention risks, grounding tips, when to stop, when to consult professionals.
+3. Respect all traditions; avoid dogma or supernatural guarantees.
+4. No medical advice or diagnosis.
+5. State uncertainty when context is incomplete.
+6. Keep responses short, clear, and supportive.
 
-Response Structure:
-- Start with a brief, compassionate acknowledgment
-- Provide clear, step-by-step guidance when applicable
-- Include benefits AND potential risks/contraindications
-- Cite all sources inline
-- End with encouragement and safety reminders
+Structure:
+- Brief, empathetic acknowledgment
+- Clear explanation or steps
+- Benefits + risks/contraindications
+- Inline citations
+- End with gentle encouragement + safety reminder"""
 
-Remember: You are a guide, not a guru. Empower practitioners with knowledge while respecting their autonomy."""
+QUERY_REWRITE_PROMPT = """Rewrite the user’s question to make it more specific and better for search/RAG retrieval.
 
-QUERY_REWRITE_PROMPT = """Given the following user question about Third Eye meditation, rewrite it to be more specific and searchable while preserving the original intent.
+Original: {query}
 
-Original question: {query}
+Include terms like “Ajna”, “third eye”, “meditation practice”, “technique”, “effects”, “safety”.
 
-Rewritten question (be specific, include key terms like "Ajna", "third eye", "meditation", "practice", "safety", etc.):"""
+Rewritten question:"""
 
-ANGELITIC_RAG_PROMPT = """You are answering a question about Third Eye (Ajna) meditation. Use the following layered context to provide a comprehensive, safe, and grounded response.
+ANGELITIC_RAG_PROMPT = """Answer the user’s Third Eye (Ajna) meditation question using layered context.
 
-CANONICAL TEACHINGS (highest priority):
+CANONICAL TEACHINGS:
 {canonical_context}
 
-SAFETY & CONTRAINDICATIONS (critical):
+SAFETY:
 {safety_context}
 
-PRACTICES & TECHNIQUES:
+PRACTICES:
 {practices_context}
 
 Q&A EXEMPLARS:
 {qa_context}
 
-User Question: {query}
+USER QUESTION:
+{query}
 
 Instructions:
-1. Synthesize information across all layers, prioritizing safety and canonical teachings
-2. Cite sources inline: [Source: title, page/url]
-3. Include both benefits and risks
-4. Acknowledge if information is incomplete
-5. Provide actionable guidance when appropriate
-6. End with safety reminders
+1. Synthesize the above; prioritize canonical teachings + safety.
+2. Cite all information inline: [Source: title/page].
+3. Include benefits and risks.
+4. If context is incomplete, acknowledge uncertainty.
+5. Provide simple, actionable steps when relevant.
+6. End with a short safety reminder.
 
 Response:"""
 
-CITATION_EXTRACTION_PROMPT = """Extract all citations from the following text and format them as a structured list.
+CITATION_EXTRACTION_PROMPT = """Extract all citations from the text below.
 
 Text: {text}
 
-Return a JSON array of citations with format:
+Return JSON:
 [
-  {{"source": "title", "reference": "page/url", "snippet": "relevant quote"}}
+  {"source": "title", "reference": "page/url", "snippet": "relevant quote"}
 ]
 
 Citations:"""
 
-GUARDRAIL_CHECK_PROMPT = """Review the following response for safety and appropriateness in the context of Third Eye meditation guidance.
+GUARDRAIL_CHECK_PROMPT = """Review the response for safety and appropriateness.
 
 Response: {response}
 
-Check for:
-1. Medical advice or diagnosis (should be absent)
-2. Prescriptive claims without sources (should be absent)
-3. Safety warnings and contraindications (should be present when relevant)
-4. Source citations (should be present)
-5. Acknowledgment of uncertainty (should be present when applicable)
+Check:
+1. No medical advice or diagnosis.
+2. No unsupported or mystical claims without sources.
+3. Safety warnings included when relevant.
+4. Inline citations present.
+5. Uncertainty acknowledged when needed.
 
 Return JSON:
-{{
+{
   "is_safe": true/false,
   "issues": ["list of issues if any"],
   "suggestions": ["improvements if needed"]
-}}
+}
 
 Evaluation:"""
