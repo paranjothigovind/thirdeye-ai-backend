@@ -26,6 +26,15 @@ class IngestResponse(BaseModel):
     status: str
     message: str
 
+class DocIdListResponse(BaseModel):
+    count: int
+    doc_ids: List[str] = []
+    dummy_query: Optional[str] = None
+    text_results: Optional[List[Dict[str, Any]]] = None
+    vector_results: Optional[List[Dict[str, Any]]] = None
+    error: Optional[str] = None
+
+
 
 class DocumentStatusResponse(BaseModel):
     """Document ingestion status response"""
@@ -137,6 +146,20 @@ async def ingest(
         logger.error(f"Error in ingest endpoint: {e}", extra={"job_id": job_id})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+@router.get("/documents", response_model=DocIdListResponse)
+async def list_documents():
+    """List all unique ingested document IDs"""
+    try:
+        result = await vector_store.list_all_doc_ids()
+        return DocIdListResponse(**result)
+
+    except Exception as e:
+        logger.error(f"Error listing document IDs: {e}")
+        raise HTTPException(
+            status_code=500,
             detail=str(e)
         )
 

@@ -38,61 +38,161 @@
             }
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
         @keyframes typing {
             0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
             30% { transform: translateY(-10px); opacity: 1; }
         }
-        
         .typing-dot {
             animation: typing 1.4s infinite;
         }
-        
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-        
-        /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
         }
-        
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f1f1;
             border-radius: 10px;
         }
-        
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
             border-radius: 10px;
         }
-        
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
         }
-
-        /* Gradient background animation */
         @keyframes gradient-shift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-        
         .animated-gradient {
             background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
             background-size: 400% 400%;
             animation: gradient-shift 15s ease infinite;
         }
+        .markdown-content {
+            line-height: 1.6;
+        }
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3,
+        .markdown-content h4,
+        .markdown-content h5,
+        .markdown-content h6 {
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: #1f2937;
+        }
+        .markdown-content h1 { font-size: 1.875rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.3em; }
+        .markdown-content h2 { font-size: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.3em; }
+        .markdown-content h3 { font-size: 1.25rem; }
+        .markdown-content h4 { font-size: 1.125rem; }
+        .markdown-content h5 { font-size: 1rem; }
+        .markdown-content h6 { font-size: 0.875rem; color: #6b7280; }
+        .markdown-content p {
+            margin-bottom: 1em;
+        }
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+        .markdown-content li {
+            margin-bottom: 0.5em;
+        }
+        .markdown-content code {
+            background-color: #f3f4f6;
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            font-family: 'Courier New', monospace;
+            color: #dc2626;
+        }
+        .markdown-content pre {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 1em;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+            font-size: 0.875rem;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #8b5cf6;
+            padding-left: 1em;
+            margin: 1em 0;
+            color: #6b7280;
+            font-style: italic;
+            background-color: #f9fafb;
+            padding: 0.5em 1em;
+            border-radius: 0.25rem;
+        }
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+        .markdown-content th {
+            background-color: #8b5cf6;
+            color: white;
+            font-weight: 600;
+            padding: 0.75em;
+            text-align: left;
+        }
+        .markdown-content td {
+            padding: 0.75em;
+            border-top: 1px solid #e5e7eb;
+        }
+        .markdown-content tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .markdown-content a {
+            color: #8b5cf6;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .markdown-content a:hover {
+            color: #7c3aed;
+        }
+        .markdown-content hr {
+            border: none;
+            border-top: 2px solid #e5e7eb;
+            margin: 2em 0;
+        }
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            margin: 1em 0;
+        }
+        .markdown-content strong {
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .markdown-content em {
+            font-style: italic;
+        }
     </style>
 </head>
 <body class="animated-gradient min-h-screen flex items-center justify-center p-4 sm:p-6">
-    <!-- Main Container -->
     <div class="w-full max-w-5xl h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-sm bg-opacity-95">
-        
         <!-- Header -->
         <div class="relative bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 text-white px-6 sm:px-8 py-6 sm:py-8">
             <div class="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20 animate-pulse-slow"></div>
             <div class="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16 animate-float"></div>
-            
             <div class="relative z-10 text-center">
                 <div class="flex items-center justify-center mb-3">
                     <span class="text-5xl sm:text-6xl animate-pulse-slow">🧘</span>
@@ -105,7 +205,6 @@
                 </p>
             </div>
         </div>
-
         <!-- Chat Container -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 bg-gradient-to-b from-gray-50 to-white custom-scrollbar">
             <!-- Welcome Message -->
@@ -116,14 +215,13 @@
                 <div class="flex-1 max-w-3xl">
                     <div class="bg-white rounded-2xl rounded-tl-sm shadow-md border border-purple-100 p-4 sm:p-5">
                         <p class="text-gray-800 leading-relaxed text-sm sm:text-base">
-                            Welcome! I'm here to guide you through <span class="font-semibold text-purple-700">Third Eye (Ajna)</span> meditation practices. 
+                            Welcome! I'm here to guide you through <span class="font-semibold text-purple-700">Third Eye (Ajna)</span> meditation practices.
                             Ask me about techniques, benefits, safety considerations, or any questions about your practice.
                             All my guidance is grounded in authentic teachings and includes proper citations.
                         </p>
                     </div>
                 </div>
             </div>
-            
             <!-- Typing Indicator (hidden by default) -->
             <div id="typingIndicator" class="hidden flex gap-3 sm:gap-4">
                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
@@ -136,48 +234,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Knowledge Ingestion Section -->
-        <!-- <div class="border-t border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50 px-4 sm:px-6 md:px-8 py-4">
-            <div class="flex items-center gap-2 mb-3">
-                <span class="text-xl">📚</span>
-                <h3 class="text-sm font-semibold text-gray-700">Ingest Knowledge</h3>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="flex gap-2">
-                    <input 
-                        type="file" 
-                        id="pdfFile" 
-                        accept=".pdf"
-                        class="flex-1 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 file:cursor-pointer border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                    <button 
-                        onclick="uploadPDF()"
-                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 shadow-md">
-                        Upload PDF
-                    </button>
-                </div>
-                
-
-                <div class="flex gap-2">
-                    <input 
-                        type="text" 
-                        id="urlInput" 
-                        placeholder="Enter URLs (comma-separated)"
-                        class="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                    >
-                    <button 
-                        onclick="ingestURLs()"
-                        class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 shadow-md">
-                        Ingest URLs
-                    </button>
-                </div>
-            </div>
-            
-            <div id="uploadStatus" class="mt-3"></div>
-        </div> -->
-
         <!-- Input Container -->
         <div class="border-t border-gray-200 bg-white px-4 sm:px-6 md:px-8 py-4 sm:py-5">
             <div class="flex gap-3 items-end">
@@ -209,28 +265,20 @@
             </div>
         </div>
     </div>
-
     <script>
-        // Set API base URL for different environments
         window.API_BASE_URL = '/api';
-        
-        // Helper function to show typing indicator
+
         function showTypingIndicator() {
             document.getElementById('typingIndicator').classList.remove('hidden');
             scrollToBottom();
         }
-        
         function hideTypingIndicator() {
             document.getElementById('typingIndicator').classList.add('hidden');
         }
-        
-        // Helper function to scroll chat to bottom
         function scrollToBottom() {
             const container = document.getElementById('chatContainer');
             container.scrollTop = container.scrollHeight;
         }
-        
-        // Add user message to chat
         function addUserMessage(message) {
             const chatContainer = document.getElementById('chatContainer');
             const messageDiv = document.createElement('div');
@@ -248,13 +296,51 @@
             chatContainer.appendChild(messageDiv);
             scrollToBottom();
         }
-        
-        // Add assistant message to chat
+        marked.setOptions({
+            gfm: true,
+            breaks: true,
+            headerIds: true,
+            mangle: false,
+            sanitize: false
+        });
+        function renderMarkdownSafe(text) {
+            try {
+                const rawHtml = marked.parse(text || '');
+                const cleanHtml = DOMPurify.sanitize(rawHtml, {
+                    ALLOWED_TAGS: [
+                        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                        'p', 'br', 'hr',
+                        'strong', 'em', 'u', 's', 'del', 'mark',
+                        'ul', 'ol', 'li',
+                        'a', 'code', 'pre',
+                        'blockquote',
+                        'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                        'img',
+                        'div', 'span'
+                    ],
+                    ALLOWED_ATTR: [
+                        'href', 'target', 'rel',
+                        'src', 'alt', 'title',
+                        'class', 'id',
+                        'colspan', 'rowspan',
+                        'align', 'valign'
+                    ],
+                    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+                    ALLOW_DATA_ATTR: false,
+                    KEEP_CONTENT: true,
+                    RETURN_TRUSTED_TYPE: false
+                });
+                return cleanHtml;
+            } catch (error) {
+                console.error('Markdown rendering error:', error);
+                return escapeHtml(text || '');
+            }
+        }
         function addAssistantMessage(message, citations = null) {
             const chatContainer = document.getElementById('chatContainer');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'flex gap-3 sm:gap-4';
-            
+            const safeHtml = renderMarkdownSafe(message);
             let citationsHtml = '';
             if (citations && citations.length > 0) {
                 citationsHtml = `
@@ -275,26 +361,27 @@
                     </div>
                 `;
             }
-            
             messageDiv.innerHTML = `
                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
                     🙏
                 </div>
                 <div class="flex-1 max-w-3xl">
                     <div class="bg-white rounded-2xl rounded-tl-sm shadow-md border border-purple-100 p-4 sm:p-5">
-                        <p class="text-gray-800 leading-relaxed text-sm sm:text-base">${escapeHtml(message)}</p>
+                        <div class="markdown-content text-gray-800 leading-relaxed text-sm sm:text-base">${safeHtml}</div>
                         ${citationsHtml}
                     </div>
                 </div>
             `;
+            messageDiv.querySelectorAll('a').forEach(a => {
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+            });
             chatContainer.appendChild(messageDiv);
             scrollToBottom();
         }
-        
-        // Show status message for uploads
         function showStatus(message, isSuccess = true) {
             const statusDiv = document.getElementById('uploadStatus');
-            statusDiv.className = `mt-3 p-3 rounded-lg text-sm font-medium ${isSuccess ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`;
+            statusDiv.className = `mt-3 p-3 rounded-lg text-sm font-medium ${isSuccess ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border-red-200'}`;
             statusDiv.innerHTML = `
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -305,15 +392,11 @@
             `;
             setTimeout(() => statusDiv.innerHTML = '', 5000);
         }
-        
-        // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
-        // Handle Enter key press
         function handleKeyPress(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();

@@ -32,6 +32,7 @@ class RAGChain:
                 context = await self._retrieve_angelitic_context(query)
             else:
                 documents = await self.retriever.retrieve(query)
+                logger.info(f"✅ Retrieved {len(documents)} documents for RAG context")
                 context = self._format_context(documents)
             
             # Generate response
@@ -48,12 +49,34 @@ class RAGChain:
             raise
     
     async def _retrieve_angelitic_context(self, query: str) -> str:
-        """Retrieve context using Angelitic RAG layers"""
-        # Retrieve from each layer
-        canonical_docs = await self.retriever.retrieve_by_layer(query, "canonical", top_k=2)
-        safety_docs = await self.retriever.retrieve_by_layer(query, "safety", top_k=2)
-        practices_docs = await self.retriever.retrieve_by_layer(query, "practices", top_k=2)
-        qa_docs = await self.retriever.retrieve_by_layer(query, "qa", top_k=2)
+        """Retrieve context using Angelitic RAG layers with robust fallbacks"""
+        # Retrieve from each layer with resilience to errors/None
+        try:
+            canonical_docs = await self.retriever.retrieve_by_layer(query, "canonical", top_k=2)
+        except Exception as e:
+            logger.error(f"Angelitic layer retrieval failed for 'canonical': {e}")
+            canonical_docs = []
+        try:
+            safety_docs = await self.retriever.retrieve_by_layer(query, "safety", top_k=2)
+        except Exception as e:
+            logger.error(f"Angelitic layer retrieval failed for 'safety': {e}")
+            safety_docs = []
+        try:
+            practices_docs = await self.retriever.retrieve_by_layer(query, "practices", top_k=2)
+        except Exception as e:
+            logger.error(f"Angelitic layer retrieval failed for 'practices': {e}")
+            practices_docs = []
+        try:
+            qa_docs = await self.retriever.retrieve_by_layer(query, "qa", top_k=2)
+        except Exception as e:
+            logger.error(f"Angelitic layer retrieval failed for 'qa': {e}")
+            qa_docs = []
+        
+        # Normalize None to empty lists
+        canonical_docs = canonical_docs or []
+        safety_docs = safety_docs or []
+        practices_docs = practices_docs or []
+        qa_docs = qa_docs or []
         
         # Format each layer
         canonical_context = self._format_context(canonical_docs)
@@ -61,7 +84,7 @@ class RAGChain:
         practices_context = self._format_context(practices_docs)
         qa_context = self._format_context(qa_docs)
         
-        # Combine using template
+        # Combine using template with safe defaults
         return ANGELITIC_RAG_PROMPT.format(
             canonical_context=canonical_context or "No canonical teachings found.",
             safety_context=safety_context or "No safety information found.",
@@ -112,6 +135,31 @@ class RAGChain:
         
         return citations
 
+    async def clear_all(self) -> Dict[str, Any]:
+        """Delete all documents and recreate the index"""
+        try:
+            # Delete the existing index
+            try:
+                self.index_client.delete_index(settings.AZURE_SEARCH_INDEX)
+                logger.info(f"Deleted index: {settings.AZURE_SEARCH_INDEX}")
+            except Exception as e:
+                logger.warning(f"Index {settings.AZURE_SEARCH_INDEX} may not exist: {e}")
+
+            # Recreate the index
+            self._ensure_index()
+            logger.info(f"Recreated index: {settings.AZURE_SEARCH_INDEX}")
+
+            return {
+                "status": "success",
+                "message": "All vector data cleared and index recreated"
+            }
+
+        except Exception as e:
+            logger.error(f"Error clearing vector store: {e}")
+            return {
+                "status": "error",
+                "error": str(e)
+            }
 
 # Global chain instance
 rag_chain = RAGChain()

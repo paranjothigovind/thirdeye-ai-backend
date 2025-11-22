@@ -194,31 +194,163 @@ class VectorStore:
         except Exception as e:
             logger.error(f"Error marking old versions: {e}")
 
-    async def check_document_ingested(self, doc_id: str) -> Dict[str, Any]:
-        """Check if a document has been ingested and return metadata"""
+    async def list_all_doc_ids(self) -> Dict[str, Any]:
+        """Return all unique doc_ids and run dummy query tests"""
         try:
-            # Search for the latest version of the document
+
+            # ====================================================
+            # 1️⃣ LIST ALL DOC IDS
+            # ====================================================
             results = self.search_client.search(
                 search_text="*",
+                select=["doc_id"],
+                top=10000
+            )
+
+            doc_ids = set()
+            total_scanned = 0
+
+            for item in results:
+                total_scanned += 1
+                doc_id = item.get("doc_id")
+                if doc_id:
+                    doc_ids.add(doc_id)
+
+            doc_ids_list = sorted(doc_ids)
+
+            # ====================================================
+            # 2️⃣ DUMMY QUERY TEXT SEARCH
+            # ====================================================
+            dummy_query = "who is paranjothi"
+
+            text_results_raw = list(self.search_client.search(
+                search_text=dummy_query,
+                select=["id", "doc_id", "content", "title"],
+                top=5
+            ))
+
+            text_results = []
+            for r in text_results_raw:
+                text_results.append({
+                    "id": r.get("id"),
+                    "doc_id": r.get("doc_id"),
+                    "title": r.get("title"),
+                    "content": r.get("content"),
+                    "score": r.get("@search.score")
+                })
+
+            logger.info(f"📄 Dummy TEXT search returned {len(text_results)} docs")
+
+            # ====================================================
+            # 3️⃣ DUMMY VECTOR SEARCH
+            # ====================================================
+            vector_results = []
+            try:
+                dummy_vector = await embeddings_client.embed_query(dummy_query)
+
+                from azure.search.documents.models import VectorizedQuery
+                vector_query = VectorizedQuery(
+                    vector=dummy_vector,
+                    k_nearest_neighbors=5,
+                    fields="content_vector",
+                )
+
+
+                vector_raw = list(self.search_client.search(
+                    search_text="",
+                    vector_queries=[vector_query],
+                    select=["id", "doc_id", "content", "title"],
+                    top=5
+                ))
+
+                for item in vector_raw:
+                    vector_results.append({
+                        "id": item.get("id"),
+                        "doc_id": item.get("doc_id"),
+                        "title": item.get("title"),
+                        "content": item.get("content"),
+                        "score": item.get("@search.score")
+                    })
+
+
+            except Exception as ve:
+                logger.error(f"❌ Dummy VECTOR search failed: {ve}")
+
+            # ====================================================
+            # 4️⃣ RETURN EVERYTHING
+            # ====================================================
+            return {
+                "count": len(doc_ids_list),
+                "doc_ids": doc_ids_list,
+                "dummy_query": dummy_query,
+                "text_results": text_results,
+                "vector_results": vector_results
+            }
+
+        except Exception as e:
+            logger.error(f"❌ Error listing doc_ids: {e}")
+            return {
+                "error": str(e),
+                "count": 0,
+                "doc_ids": [],
+                "dummy_query": "who is paranjothi",
+                "text_results": [],
+                "vector_results": []
+            }
+
+
+
+    async def check_document_ingested(self, doc_id: str) -> Dict[str, Any]:
+        """Check ingestion status and print document counts"""
+        try:
+            # ---------------------------
+            # 1. Count ALL documents
+            # ---------------------------
+            count_all = self.search_client.get_document_count()
+
+            # ---------------------------
+            # 2. Count docs for this doc_id
+            # ---------------------------
+            results_iter = self.search_client.search(
+                search_text="*",
+                filter=f"doc_id eq '{doc_id}'",
+                select=["id", "doc_id", "version", "title", "source", "timestamp"]
+            )
+
+            docs_for_id = list(results_iter)
+            count_for_id = len(docs_for_id)
+
+            # ---------------------------
+            # 3. Return metadata of latest version
+            # ---------------------------
+            latest_iter = self.search_client.search(
+                search_text="*",
                 filter=f"doc_id eq '{doc_id}' and is_latest eq true",
-                select=["doc_id", "version", "title", "source", "timestamp"],
+                select=["id", "doc_id", "version", "title", "source", "timestamp"],
                 top=1
             )
 
-            for result in results:
+            latest_list = list(latest_iter)
+
+            if not latest_list:
                 return {
-                    "ingested": True,
-                    "doc_id": result["doc_id"],
-                    "version": result["version"],
-                    "title": result.get("title", ""),
-                    "source": result.get("source", ""),
-                    "timestamp": result.get("timestamp", "")
+                    "ingested": False,
+                    "doc_id": doc_id,
+                    "total_docs_in_index": count_all,
+                    "total_docs_for_id": count_for_id,
                 }
 
-            # No document found
+            latest = latest_list[0]
+
             return {
-                "ingested": False,
-                "doc_id": doc_id
+                "ingested": True,
+                "doc_id": latest["doc_id"],
+                "version": latest["version"],
+                "title": latest.get("title", ""),
+                "source": latest.get("source", ""),
+                "timestamp": latest.get("timestamp", ""),
+                "total_docs_in_index": count_all,
+                "total_docs_for_id": count_for_id,
             }
 
         except Exception as e:
