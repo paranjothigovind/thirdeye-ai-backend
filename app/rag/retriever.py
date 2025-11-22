@@ -189,7 +189,8 @@ class HybridRetriever:
             elif isinstance(value, (int, float)):
                 parts.append(f"{key} eq {value}")
             elif isinstance(value, list):
-                escaped_values = [f"'{v.replace("'", "''")}'" if isinstance(v, str) else str(v) for v in value]
+                # Safely quote string values for OData IN clause
+                escaped_values = [("'" + v.replace("'", "''") + "'") if isinstance(v, str) else str(v) for v in value]
                 parts.append(f"{key} in ({', '.join(escaped_values)})")
             else:
                 logger.warning(f"⚠️ Unsupported filter type for {key}: {type(value)}")
