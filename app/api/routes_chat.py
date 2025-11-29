@@ -98,7 +98,7 @@ async def chat(request: ChatRequest):
                     yield f"data: {json.dumps({'citations': [c for c in citations], 'type': 'citations'})}\n\n"
                     
                     # Send done signal
-                    yield f"data: {json.dumps({'type': 'done', 'request_id': request_id})}\n\n"
+                    yield "data: [DONE]\n\n"
                     
                 except Exception as e:
                     logger.error(f"Error in streaming: {e}", extra={"request_id": request_id})
