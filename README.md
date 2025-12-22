@@ -104,6 +104,48 @@ docker-compose down
 
 ## 📡 API Endpoints
 
+### Authentication
+
+#### User Registration
+```bash
+POST /api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "username": "testuser",
+  "password": "securepassword"
+}
+```
+
+#### User Login
+```bash
+POST /api/auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser&password=securepassword
+```
+
+Response:
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+#### Get Current User (Authenticated)
+```bash
+GET /api/auth/me
+Authorization: Bearer <access_token>
+```
+
+#### Get User Subscriptions (Authenticated)
+```bash
+GET /api/auth/subscriptions
+Authorization: Bearer <access_token>
+```
+
 ### Chat
 ```bash
 POST /api/chat

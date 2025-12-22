@@ -5,6 +5,16 @@ pydantic>=2.5.0
 pydantic-settings>=2.1.0
 python-multipart>=0.0.6
 
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+
+# Authentication
+passlib[bcrypt]>=1.7.0
+bcrypt>=4.0.1,<5.0  # Pin to v4.x for passlib compatibility
+python-jose[cryptography]>=3.3.0
+python-jwt>=4.0.0
+
 # LangChain & LangGraph
 langchain>=0.1.0
 langchain-openai>=0.0.5

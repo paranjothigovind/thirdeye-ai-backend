@@ -15,8 +15,8 @@ class EmbeddingsClient:
     def __init__(self):
         """Initialize embeddings client"""
         self.embeddings = AzureOpenAIEmbeddings(
-            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
-            api_key=settings.AZURE_OPENAI_API_KEY,
+            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT_CHAT,
+            api_key=settings.AZURE_OPENAI_CHAT_API_KEY,
             api_version=settings.AZURE_OPENAI_API_VERSION,
             deployment=settings.AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT,
         )
