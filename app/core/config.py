@@ -46,6 +46,14 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
     MAX_UPLOAD_SIZE_MB: int = 25
 
+    # Database
+    DATABASE_URL: str = "sqlite:///./thirdeye.db"
+
+    # Authentication
+    SECRET_KEY: str = "your-secret-key-here"
+    JWT_SECRET_KEY: str = "your-jwt-secret-key-here"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
     # RAG Configuration
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 150

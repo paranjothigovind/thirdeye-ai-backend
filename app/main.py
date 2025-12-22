@@ -7,7 +7,7 @@ import os
 
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api import routes_chat, routes_ingest, routes_jobs, routes_health, routes_graph
+from app.api import routes_chat, routes_ingest, routes_jobs, routes_health, routes_graph, routes_auth
 
 # Setup logging
 setup_logging()
@@ -36,6 +36,7 @@ app.include_router(routes_chat.router, prefix="/api", tags=["chat"])
 app.include_router(routes_graph.router, prefix="/api", tags=["chat-advanced"])
 app.include_router(routes_ingest.router, prefix="/api", tags=["ingestion"])
 app.include_router(routes_jobs.router, prefix="/api", tags=["jobs"])
+app.include_router(routes_auth.router, prefix="/api/auth", tags=["auth"])
 
 # Mount static files for UI
 static_path = os.path.join(os.path.dirname(__file__), "ui", "static")
