@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     # Application
     APP_ENV: str = "development"
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: List[str] = ["https://thirdeye-ai-frontend.onrender.com/", "http://localhost:3000", "http://localhost:8000"]
     MAX_UPLOAD_SIZE_MB: int = 25
 
     # Database
@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             if not v.strip():
-                return ["http://localhost:3000", "http://localhost:8000"]
+                return ["https://thirdeye-ai-frontend.onrender.com", "http://localhost:3000", "http://localhost:8000"]
             try:
                 return json.loads(v)
             except json.JSONDecodeError:
