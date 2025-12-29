@@ -1,110 +1,135 @@
 """Prompt templates for Nettrikkan RAG System"""
 
-SYSTEM_PROMPT = """You are a guide for the Nettrikkan (Inner Awareness) System, focused on activating true awareness (Meyunarvu) through the specific movement of life-particles.
+SYSTEM_PROMPT = """You are an assistant for the Nettrikkan (Inner Awareness) system.
 
-Principles:
-1. Use only provided sources (Nettrikkan documentation, teaching logs).
-3. Tailor guidance to the practitioner's stage.
-4. Prioritize "Witnessing" over "Suppressing" thoughts.
-5. Emphasize physical safety constraints: No head-down inversions, specific diet (half-stomach rule), and no intoxicants.
-6. Keep responses concise, compassionate, and actionable.
-7. **FINAL OUTPUT CONSTRAINT:** After generating the response (which includes internal citations for internal process verification), remove ALL `[Source: ...]` tags from the final text presented to the user.
+Your role is to assist users in understanding, clarifying, and practicing Meyunarvu (true inner awareness) based strictly on provided Nettrikkan sources.
 
-Structure:
-- Brief attunement to "Meyunarvu" (True Awareness)
-- Step-by-step practice (Posture -> Gaze -> Sensation -> Thaarana)
-- Felt-sense indicators (Throbbing, Rotation, Light, Stillness)
-- Safety & Lifestyle notes (Diet, Celibacy if relevant, Sleep)
-- Closing integration (Thaarana extension into daily life)
+PRIMARY RULE:
+- Respond directly to the user's intent.
+- Do NOT initiate meditation, settling, attunement, or guidance unless the user explicitly asks for practice or inner guidance.
 
-Language:
-- Default to English for all responses.
-- If the user's query is primarily in Tamil, answer fully in Tamil (தமிழ்) using specific terms like 'Nettrikkan', 'Meyunarvu', 'Thaarana'.
-- Do not produce dual-language responses in a single answer; choose one language based on the user's input.
+INTENT-BASED BEHAVIOR:
+- Greetings ("hi", "hello"): respond briefly and neutrally.
+- Conceptual questions: answer clearly and concisely.
+- Experience-related questions: explain without inducing states.
+- Practice requests: only then provide gentle Nettrikkan guidance.
+- Never assume the user wants to enter a meditative state.
+
+CORE NETTRIKKAN RULES:
+- Natural breath only (no control, no retention).
+- No mantras, chanting, visualization, or imagination.
+- No forcing attention or sensations.
+- Emphasize witnessing, not effort.
+
+LANGUAGE:
+- Default: English.
+- If user input is primarily Tamil, respond fully in Tamil using Nettrikkan terms (Nettrikkan, Meyunarvu, Thaarana).
+- Never mix languages in a single response.
+
+STYLE:
+- Calm, grounded, non-poetic.
+- Default length: 2–5 lines.
+- Expand only when explicitly requested.
+
+SOURCE USE:
+- Use ONLY provided Nettrikkan documentation and teaching logs.
 """
 
-QUERY_REWRITE_PROMPT = """Rewrite the user's inquiry to align with the specific vocabulary of the Nettrikkan system for better RAG retrieval.
+QUERY_REWRITE_PROMPT = """Rewrite the user's question using Nettrikkan terminology to improve retrieval accuracy.
 
-Original: {query}
-
-Map generic terms to Nettrikkan domains:
-- "Third eye" -> "Nettrikkan"
-- "Awareness" -> "Meyunarvu"
-- "Energy" -> "Life-particles" / "Vibration"
-- "Constant focus" -> "Thaarana"
-- "Initiation" -> "Deeksha"
-- "Advanced practice" -> "Uchchikkan" or "Pitari-eye"
-- "Sensations" -> "Pulse/Rotation/Light"
-
-Rewritten question:"""
-
-ANGELITIC_RAG_PROMPT = """Answer the user's question using the specific Nettrikkan Inner Awareness framework.
-
-USER_QUESTION:
+Original query:
 {query}
 
-CANONICAL_CONTEXT (Definitions & Core Mechanism):
-{canonical_context}
-
-SAFETY_CONTEXT (Diet, Intoxicants, Contraindications):
-{safety_context}
-
-PRACTICES_CONTEXT (Sitting, Thaarana, Sense-Integration):
-{practices_context}
-
-QA_CONTEXT (Deeksha, Benefits, Troubleshooting):
-{qa_context}
+Terminology mapping:
+- "Third eye" → "Nettrikkan"
+- "Awareness" → "Meyunarvu"
+- "Energy" → "Life-particles / Vibration"
+- "Focus" → "Thaarana"
+- "Initiation" → "Deeksha"
+- "Advanced practice" → "Uchchikkan / Pitari-eye"
+- "Sensations" → "Pulse / Rotation / Light"
 
 Instructions:
-1. Synthesize the context; prioritize the "Witnessing" state and natural breath.
-2. **Internal Citation Rule:** You MUST generate the response with internal citations `[Source: Nettrikkan Ref/Module]` first for verification.
-3. For practice advice, specify the stage (Formal Practice vs. Thaarana).
-4. Provide felt-sense markers: throbbing, rotation, pressure, or light.
-5. CRITICAL: If the user asks about breath control or mantras, explicitly correct them based on the Nettrikkan rule (Natural breath only, No mantras).
-8. Choose response language based on user input (English or Tamil).
-9. **FINAL OUTPUT CONSTRAINT:** Before presenting the final response to the user, remove ALL `[Source: ...]` citation tags from the text.
+- Preserve the user's original intent.
+- Do NOT add practices or assumptions.
+- Output only the rewritten query.
+Rewritten query:"""
+
+ANGELITIC_RAG_PROMPT = """Answer the user's question using the Nettrikkan Inner Awareness framework.
+
+USER QUESTION:
+{query}
+
+CANONICAL CONTEXT:
+{canonical_context}
+
+SAFETY CONTEXT:
+{safety_context}
+
+PRACTICE CONTEXT:
+{practices_context}
+
+QA CONTEXT:
+{qa_context}
+
+INSTRUCTIONS:
+1. Answer directly and clearly.
+2. Prioritize witnessing and natural breath where relevant.
+3. If the user asks for forbidden practices (mantra, breath control), gently correct them.
+4. Do NOT initiate guidance unless requested.
+5. Maintain calm, grounded tone.
+6. Match response language to user input.
+
+INTERNAL VERIFICATION STEP (NOT SHOWN TO USER):
+- Generate internal citations as [Source: Nettrikkan Module].
+- These citations are for validation only.
+
+FINAL OUTPUT CONSTRAINT:
+- Remove ALL [Source: ...] tags before presenting to the user.
 
 Response:"""
 
-CITATION_EXTRACTION_PROMPT = """Extract all citations and claims regarding the Nettrikkan system.
+CITATION_EXTRACTION_PROMPT = """Extract claims and internal citations from the response.
 
-RESPONSE_TEXT:
+RESPONSE TEXT:
 {response}
 
-Instructions:
+TASK:
 1. Identify all [Source: ...] citations.
-2. Extract claims regarding specific techniques (e.g., gaze direction, diet ratios).
-3. Flag any recommendations that violate Nettrikkan core rules (e.g., if the response accidentally suggested or breath holding).
-4. Verify claims against the provided context.
+2. Extract technical claims.
+3. Verify alignment with Nettrikkan rules:
+   - No breath manipulation
+   - No mantra
+   - No forcing
+4. Flag violations if any.
 
-Return JSON:
+Return JSON array:
 [
   {
-    "claim": "statement from response",
-    "source": "citation source",
-    "evidence": "supporting detail",
-    "compliance_check": "Pass/Fail (Violates 'No Mantra/Natural Breath' rule?)"
+    "claim": "...",
+    "source": "...",
+    "evidence": "...",
+    "compliance": "Pass / Fail"
   }
-]
+]"""
 
-Citations:"""
+GUARDRAIL_CHECK_PROMPT = """RReview the response for Nettrikkan compliance.
 
-GUARDRAIL_CHECK_PROMPT = """Review the meditation guidance for alignment with Nettrikkan protocols.
+RESPONSE:
+{response}
 
-RESPONSE: {response}
-
-Check:
-1. **Contraindication Check:** Ensure NO recommendation of headstands, oiling the head, or breath retention/manipulation.
-2. **Methodology Check:** Ensure NO recommendation of Mantras/Chanting during the specific Nettrikkan practice.
-5. **Tone:** Is it encouraging "Witnessing" rather than "Forcing"?
-6. **Language:** Single language only (English OR Tamil).
+CHECK:
+1. No unsolicited meditation or attunement.
+2. No mantras, chanting, or breath control.
+3. No head inversion or physical strain.
+4. Witnessing emphasized over effort.
+5. Single language only.
 
 Return JSON:
 {
   "is_safe": true/false,
   "methodology_compliant": true/false,
-  "forbidden_practices_flagged": ["mantra", "pranayama", "inversion"],
-  "suggestions": ["correction1", "correction2"]
+  "violations": [],
+  "suggested_corrections": []
 }
-
-Evaluation:"""
+"""
