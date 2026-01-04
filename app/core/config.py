@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     AZURE_OPENAI_API_VERSION: str = "2024-02-15-preview"
     AZURE_OPENAI_CHAT_DEPLOYMENT: str
     AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT: str
-    CORS_ORIGINS: list[str] = ["http://localhost"]
+    CORS_ORIGINS: list[str] = ["http://localhost", "https://thirdeye-ai-frontend.onrender.com"]
 
     # Azure AI Search
     AZURE_SEARCH_ENDPOINT: str
