@@ -25,7 +25,7 @@ class WebPipeline:
         self.splitter = document_splitter
         self.rate_limit = 1.0 / settings.WEB_SCRAPING_RPS
     
-    async def process_urls(self, urls: List[str]) -> List[Dict[str, Any]]:
+    async def process_urls(self, urls: List[str], context: str = None) -> List[Dict[str, Any]]:
         """Process multiple URLs"""
         results = []
         
@@ -33,12 +33,12 @@ class WebPipeline:
             # Rate limiting
             await asyncio.sleep(self.rate_limit)
             
-            result = await self._process_single_url(url)
+            result = await self._process_single_url(url, context)
             results.append(result)
         
         return results
     
-    async def _process_single_url(self, url: str) -> Dict[str, Any]:
+    async def _process_single_url(self, url: str, context: str = None) -> Dict[str, Any]:
         """Process a single URL"""
         try:
             logger.info(f"Processing URL: {url}")
@@ -57,8 +57,26 @@ class WebPipeline:
             # Parse and clean
             document = self._parse_html(content, url)
             
+            # Check if content was extracted
+            if not document.get("content", "").strip():
+                logger.warning(f"No content extracted from URL: {url}")
+                return {
+                    "status": "error",
+                    "url": url,
+                    "error": "No content extracted from webpage"
+                }
+            
             # Chunk
             chunks = self._chunk_document(document)
+            
+            # Check if chunking produced any results
+            if not chunks:
+                logger.warning(f"Chunking produced no chunks for URL: {url}")
+                return {
+                    "status": "error",
+                    "url": url,
+                    "error": "Failed to create text chunks from webpage content"
+                }
             
             # Generate doc_id
             doc_id = self._generate_doc_id(url)
@@ -68,8 +86,17 @@ class WebPipeline:
             result = await self.vector_store.upsert_documents(
                 chunks,
                 doc_id=doc_id,
-                version=version
+                version=version,
+                context=context
             )
+            
+            # Handle empty result from vector store
+            if result.get("status") == "empty":
+                return {
+                    "status": "error",
+                    "url": url,
+                    "error": result.get("message", "No valid content to index")
+                }
             
             return {
                 "status": "success",

@@ -18,7 +18,7 @@ router = APIRouter()
 class URLIngestRequest(BaseModel):
     """URL ingestion request"""
     urls: List[HttpUrl] = Field(..., description="List of URLs to scrape and ingest")
-
+    context: Optional[str] = Field(None, description="Context for the ingested URLs")
 
 class IngestResponse(BaseModel):
     """Ingestion response"""
@@ -50,7 +50,8 @@ class DocumentStatusResponse(BaseModel):
 @router.post("/ingest", response_model=IngestResponse)
 async def ingest(
     file: Optional[UploadFile] = File(None),
-    urls: Optional[str] = Form(None)
+    urls: Optional[str] = Form(None),
+    context: Optional[str] = Form(None)
 ):
     """
     Ingest content from either PDF file or URLs
@@ -81,15 +82,18 @@ async def ingest(
             # Upload to blob storage
             from io import BytesIO
             file_obj = BytesIO(file_content)
+            metadata = {"job_id": job_id}
+            if context is not None:
+                metadata["context"] = context
             blob_name = blob_storage.upload_file(
                 file_obj,
                 file.filename,
-                metadata={"job_id": job_id}
+                metadata=metadata
             )
             
             # Queue processing task
             task = process_pdf_task.apply_async(
-                args=[blob_name, file.filename, {"job_id": job_id}],
+                args=[blob_name, file.filename, metadata],
                 task_id=job_id
             )
             
@@ -174,7 +178,7 @@ async def ingest_urls(request: URLIngestRequest):
         
         # Queue processing task
         task = process_urls_task.apply_async(
-            args=[url_list],
+            args=[url_list, request.context],
             task_id=job_id
         )
         

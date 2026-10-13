@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     AZURE_SEARCH_ENDPOINT: str
     AZURE_SEARCH_KEY: str
     AZURE_SEARCH_INDEX: str = "thirdeye-knowledge-index-v2"
+    # Auto-repair recreates the index when schema drift (e.g. a non-filterable
+    # `context`) is detected. Destructive - existing documents must be re-uploaded.
+    AZURE_SEARCH_AUTO_REPAIR: bool = False
 
     # Azure Blob Storage
     AZURE_BLOB_CONNECTION_STRING: str

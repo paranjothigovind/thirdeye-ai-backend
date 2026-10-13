@@ -5,39 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Third Eye Meditation AI Chatbot</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#f5f3ff',
-                            100: '#ede9fe',
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
-                            700: '#6d28d9',
-                            800: '#5b21b6',
-                            900: '#4c1d95',
-                        },
-                        secondary: {
-                            500: '#ec4899',
-                            600: '#db2777',
-                        }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float': 'float 3s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+     <script>
+         tailwind.config = {
+             darkMode: ['class'],
+             theme: {
+                 extend: {
+                     colors: {
+                         primary: {
+                             50: '#f5f3ff',
+                             100: '#ede9fe',
+                             500: '#8b5cf6',
+                             600: '#7c3aed',
+                             700: '#6d28d9',
+                             800: '#5b21b6',
+                             900: '#4c1d95',
+                         },
+                         secondary: {
+                             500: '#ec4899',
+                             600: '#db2777',
+                         }
+                     },
+                     animation: {
+                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                         'float': 'float 3s ease-in-out infinite',
+                     },
+                     keyframes: {
+                         float: {
+                             '0%, 100%': { transform: 'translateY(0px)' },
+                             '50%': { transform: 'translateY(-10px)' },
+                         }
+                     }
+                 }
+             }
+         }
+     </script>
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
@@ -88,12 +89,21 @@
             margin-bottom: 0.5em;
             color: #1f2937;
         }
+        .dark .markdown-content h1,
+        .dark .markdown-content h2,
+        .dark .markdown-content h3,
+        .dark .markdown-content h4,
+        .dark .markdown-content h5,
+        .dark .markdown-content h6 {
+            color: #f9fafb;
+        }
         .markdown-content h1 { font-size: 1.875rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.3em; }
         .markdown-content h2 { font-size: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.3em; }
         .markdown-content h3 { font-size: 1.25rem; }
         .markdown-content h4 { font-size: 1.125rem; }
         .markdown-content h5 { font-size: 1rem; }
         .markdown-content h6 { font-size: 0.875rem; color: #6b7280; }
+        .dark .markdown-content h6 { color: #9ca3af; }
         .markdown-content p {
             margin-bottom: 1em;
         }
@@ -113,6 +123,10 @@
             font-family: 'Courier New', monospace;
             color: #dc2626;
         }
+        .dark .markdown-content code {
+            background-color: #374151;
+            color: #f87171;
+        }
         .markdown-content pre {
             background-color: #1f2937;
             color: #f9fafb;
@@ -120,6 +134,10 @@
             border-radius: 0.5rem;
             overflow-x: auto;
             margin: 1em 0;
+        }
+        .dark .markdown-content pre {
+            background-color: #111827;
+            color: #f9fafb;
         }
         .markdown-content pre code {
             background-color: transparent;
@@ -137,6 +155,11 @@
             padding: 0.5em 1em;
             border-radius: 0.25rem;
         }
+        .dark .markdown-content blockquote {
+            border-left: 4px solid #a78bfa;
+            color: #9ca3af;
+            background-color: #374151;
+        }
         .markdown-content table {
             border-collapse: collapse;
             width: 100%;
@@ -145,6 +168,9 @@
             border-radius: 0.5rem;
             border: 1px solid #e5e7eb;
         }
+        .dark .markdown-content table {
+            border-color: #374151;
+        }
         .markdown-content th {
             background-color: #8b5cf6;
             color: white;
@@ -152,25 +178,44 @@
             padding: 0.75em;
             text-align: left;
         }
+        .dark .markdown-content th {
+            background-color: #7c3aed;
+            color: #f9fafb;
+        }
         .markdown-content td {
             padding: 0.75em;
             border-top: 1px solid #e5e7eb;
         }
+        .dark .markdown-content td {
+            border-top: 1px solid #374151;
+        }
         .markdown-content tr:nth-child(even) {
             background-color: #f9fafb;
+        }
+        .dark .markdown-content tr:nth-child(even) {
+            background-color: #374151;
         }
         .markdown-content a {
             color: #8b5cf6;
             text-decoration: underline;
             font-weight: 500;
         }
+        .dark .markdown-content a {
+            color: #a78bfa;
+        }
         .markdown-content a:hover {
             color: #7c3aed;
+        }
+        .dark .markdown-content a:hover {
+            color: #8b5cf6;
         }
         .markdown-content hr {
             border: none;
             border-top: 2px solid #e5e7eb;
             margin: 2em 0;
+        }
+        .dark .markdown-content hr {
+            border-top: 2px solid #374151;
         }
         .markdown-content img {
             max-width: 100%;
@@ -182,88 +227,410 @@
             font-weight: 700;
             color: #1f2937;
         }
+        .dark .markdown-content strong {
+            color: #f9fafb;
+        }
         .markdown-content em {
             font-style: italic;
         }
     </style>
 </head>
-<body class="animated-gradient min-h-screen flex items-center justify-center p-4 sm:p-6">
-    <div class="w-full max-w-5xl h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-sm bg-opacity-95">
-        <!-- Header -->
-        <div class="relative bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 text-white px-6 sm:px-8 py-6 sm:py-8">
+<body id="theme-body" class="animated-gradient min-h-screen flex items-center justify-center p-4 sm:p-6">
+     <div class="w-full max-w-5xl h-[90vh] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90">
+         <!-- Header -->
+         <div class="relative bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 dark:from-purple-500 dark:via-pink-400 dark:to-purple-400 text-white dark:text-gray-100 px-6 sm:px-8 py-6 sm:py-8">
             <div class="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20 animate-pulse-slow"></div>
             <div class="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16 animate-float"></div>
-            <div class="relative z-10 text-center">
-                <div class="flex items-center justify-center mb-3">
-                    <span class="text-5xl sm:text-6xl animate-pulse-slow">🧘</span>
-                </div>
-                <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-tight">
-                    Third Eye Meditation AI
-                </h1>
-                <p class="text-purple-100 text-sm sm:text-base font-light">
-                    Your compassionate guide to Ajna chakra meditation
-                </p>
-            </div>
+             <div class="relative z-10 text-center">
+                 <div class="flex items-center justify-center mb-3">
+                     <span class="text-5xl sm:text-6xl animate-pulse-slow">🧘</span>
+                 </div>
+                 <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-tight">
+                     Third Eye Meditation AI
+                 </h1>
+                 <p class="text-purple-100 dark:text-purple-200 text-sm sm:text-base font-light">
+                     Your compassionate guide to Ajna chakra meditation
+                 </p>
+                 <!-- Theme Toggle -->
+                 <div class="absolute top-4 right-4">
+                     <button id="themeToggle" class="w-8 h-8 rounded-full bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200">
+                         <svg id="themeIcon" class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646M9.638 9.037l1.172-1.172M13.763 3.232l1.172-1.172M15.212 7.788l1.172 1.172M11.296 14.703l1.172 1.172M6.638 13.037l1.172 1.172M10.763 15.232l1.172 1.172M3.212 7.788l1.172-1.172M6.296 3.297l1.172 1.172M12.763 16.732l1.172 1.172M9.212 13.232l1.172-1.172"></path>
+                         </svg>
+                     </button>
+                 </div>
+             </div>
         </div>
-        <!-- Chat Container -->
-        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 bg-gradient-to-b from-gray-50 to-white custom-scrollbar">
-            <!-- Welcome Message -->
-            <div class="flex gap-3 sm:gap-4 animate-fade-in">
-                <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
-                    🙏
-                </div>
-                <div class="flex-1 max-w-3xl">
-                    <div class="bg-white rounded-2xl rounded-tl-sm shadow-md border border-purple-100 p-4 sm:p-5">
-                        <p class="text-gray-800 leading-relaxed text-sm sm:text-base">
-                            Welcome! I'm here to guide you through <span class="font-semibold text-purple-700">Third Eye (Ajna)</span> meditation practices.
-                            Ask me about techniques, benefits, safety considerations, or any questions about your practice.
-                            All my guidance is grounded in authentic teachings and includes proper citations.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <!-- Typing Indicator (hidden by default) -->
-            <div id="typingIndicator" class="hidden flex gap-3 sm:gap-4">
-                <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
-                    🙏
-                </div>
-                <div class="bg-white rounded-2xl rounded-tl-sm shadow-md border border-purple-100 p-5 flex items-center gap-2">
-                    <span class="typing-dot w-2 h-2 bg-purple-500 rounded-full"></span>
-                    <span class="typing-dot w-2 h-2 bg-purple-500 rounded-full"></span>
-                    <span class="typing-dot w-2 h-2 bg-purple-500 rounded-full"></span>
-                </div>
-            </div>
+         <!-- Chat Container -->
+         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 custom-scrollbar">
+             <!-- Welcome Message -->
+             <div class="flex gap-3 sm:gap-4 animate-fade-in">
+                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-300 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
+                     🙏
+                 </div>
+                 <div class="flex-1 max-w-3xl">
+                     <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-sm shadow-md border border-purple-100 dark:border-purple-700 p-4 sm:p-5">
+                         <p class="text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base">
+                             Welcome! I'm here to guide you through <span class="font-semibold text-purple-700 dark:text-purple-400">Third Eye (Ajna)</span> meditation practices.
+                             Ask me about techniques, benefits, safety considerations, or any questions about your practice.
+                             All my guidance is grounded in authentic teachings and includes proper citations.
+                         </p>
+                     </div>
+                 </div>
+             </div>
+             <!-- Typing Indicator (hidden by default) -->
+             <div id="typingIndicator" class="hidden flex gap-3 sm:gap-4">
+                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-300 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
+                     🙏
+                 </div>
+                 <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-sm shadow-md border border-purple-100 dark:border-purple-700 p-5 flex items-center gap-2">
+                     <span class="typing-dot w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full"></span>
+                     <span class="typing-dot w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full"></span>
+                     <span class="typing-dot w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full"></span>
+                 </div>
+             </div>
         </div>
-        <!-- Input Container -->
-        <div class="border-t border-gray-200 bg-white px-4 sm:px-6 md:px-8 py-4 sm:py-5">
-            <div class="flex gap-3 items-end">
-                <div class="flex-1 relative">
-                    <input 
-                        type="text" 
-                        id="messageInput" 
-                        placeholder="Ask about Third Eye meditation..."
-                        onkeypress="handleKeyPress(event)"
-                        class="w-full px-5 py-3 sm:py-4 text-sm sm:text-base border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-gray-50 hover:bg-white placeholder-gray-400"
-                    >
-                    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <button 
-                    id="sendButton" 
-                    onclick="sendMessage()"
-                    class="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 text-white text-sm sm:text-base font-semibold rounded-2xl hover:from-purple-700 hover:via-pink-600 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                    <span class="hidden sm:inline">Send</span>
-                    <span class="sm:hidden">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                        </svg>
-                    </span>
-                </button>
-            </div>
+         <!-- Input Container -->
+         <!-- Upload Section -->
+         <div class="mb-6">
+           <h2 class="text-xl font-bold mb-4">Upload Content</h2>
+           <div class="space-y-4">
+             <!-- PDF Upload -->
+             <div>
+               <h3 class="text-lg font-medium mb-2">Upload PDF</h3>
+               <input type="file" id="pdfFile" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-900 dark:file:text-purple-200 dark:hover:file:bg-purple-800">
+               <div class="flex mt-2">
+                 <label for="pdfContext" class="mr-2">Context:</label>
+                 <select id="pdfContext" class="border border-gray-300 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-gray-200">
+                   <option value="course_materials">Course Materials</option>
+                   <option value="post_class_support">Post-Class Support</option>
+                 </select>
+               </div>
+               <button id="uploadPdfButton" onclick="uploadPDF()" class="mt-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600">Upload PDF</button>
+             </div>
+             <!-- URL Ingestion -->
+             <div class="mt-6">
+               <h3 class="text-lg font-medium mb-2">Ingest URLs</h3>
+               <textarea id="urlInput" rows="3" placeholder="Enter URLs separated by commas" class="w-full border border-gray-300 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400"></textarea>
+               <div class="flex mt-2">
+                 <label for="urlContext" class="mr-2">Context:</label>
+                 <select id="urlContext" class="border border-gray-300 rounded px-2 py-1 bg-white dark:bg-gray-700 dark:text-gray-200">
+                   <option value="course_materials">Course Materials</option>
+                   <option value="post_class_support">Post-Class Support</option>
+                 </select>
+               </div>
+               <button id="ingestUrlsButton" onclick="ingestURLs()" class="mt-2 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600">Ingest URLs</button>
+             </div>
+             <!-- Status -->
+             <div id="uploadStatus" class="mt-4 hidden"></div>
+           </div>
+         </div>
+         <!-- End Upload Section -->
+         <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 md:px-8 py-4 sm:py-5">
+             <div class="flex gap-3 items-end">
+                 <div class="flex-1 relative">
+                     <input 
+                         type="text" 
+                         id="messageInput" 
+                         placeholder="Ask about Third Eye meditation..."
+                         onkeypress="handleKeyPress(event)"
+                         class="w-full px-5 py-3 sm:py-4 text-sm sm:text-base border-2 border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-all bg-gray-50 dark:bg-gray-700 hover:bg-white dark:hover:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500"
+                     >
+                     <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+         <!-- Input Container -->
+         <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 md:px-8 py-4 sm:py-5">
+             <div class="flex gap-3 items-end">
+                 <div class="flex-1 relative">
+                     <input 
+                         type="text" 
+                         id="messageInput" 
+                         placeholder="Ask about Third Eye meditation..."
+                         onkeypress="handleKeyPress(event)"
+                         class="w-full px-5 py-3 sm:py-4 text-sm sm:text-base border-2 border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-all bg-gray-50 dark:bg-gray-700 hover:bg-white dark:hover:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500"
+                     >
+                     <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                         </svg>
+                     </div>
+                 </div>
+                 <!-- Agent Selection Dropdown -->
+                 <div class="relative">
+                     <select id="agentSelect"
+                         class="w-32 sm:w-40 px-3 py-2 sm:py-3 text-sm sm:text-base border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200">
+                         <option value="" selected>📈 Agent</option>
+                         <option value="course">🛫 Course</option>
+                         <option value="post">🟂 Post-Class</option>
+                     </select>
+                 </div>
+                 <button 
+                     id="sendButton" 
+                     onclick="sendMessage()"
+                     class="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 dark:from-purple-500 dark:via-pink-400 dark:to-purple-400 text-white dark:text-gray-100 text-sm sm:text-base font-semibold rounded-2xl hover:from-purple-700 hover:via-pink-600 hover:to-purple-800 dark:hover:from-purple-600 dark:hover:via-pink-500 dark:hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                     <span class="hidden sm:inline">Send</span>
+                     <span class="sm:hidden">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                         </svg>
+                     </span>
+                 </button>
+             </div>
+         </div>
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-gradient {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 400% 400%;
+            animation: gradient-shift 15s ease infinite;
+        }
+        .markdown-content {
+            line-height: 1.6;
+        }
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3,
+        .markdown-content h4,
+        .markdown-content h5,
+        .markdown-content h6 {
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: #1f2937;
+        }
+        .dark .markdown-content h1,
+        .dark .markdown-content h2,
+        .dark .markdown-content h3,
+        .dark .markdown-content h4,
+        .dark .markdown-content h5,
+        .dark .markdown-content h6 {
+            color: #f9fafb;
+        }
+        .markdown-content h1 { font-size: 1.875rem; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.3em; }
+        .markdown-content h2 { font-size: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.3em; }
+        .markdown-content h3 { font-size: 1.25rem; }
+        .markdown-content h4 { font-size: 1.125rem; }
+        .markdown-content h5 { font-size: 1rem; }
+        .markdown-content h6 { font-size: 0.875rem; color: #6b7280; }
+        .dark .markdown-content h6 { color: #9ca3af; }
+        .markdown-content p {
+            margin-bottom: 1em;
+        }
+        .markdown-content ul,
+        .markdown-content ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+        .markdown-content li {
+            margin-bottom: 0.5em;
+        }
+        .markdown-content code {
+            background-color: #f3f4f6;
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem;
+            font-size: 0.875em;
+            font-family: 'Courier New', monospace;
+            color: #dc2626;
+        }
+        .dark .markdown-content code {
+            background-color: #374151;
+            color: #f87171;
+        }
+        .markdown-content pre {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 1em;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+        .dark .markdown-content pre {
+            background-color: #111827;
+            color: #f9fafb;
+        }
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+            font-size: 0.875rem;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #8b5cf6;
+            padding-left: 1em;
+            margin: 1em 0;
+            color: #6b7280;
+            font-style: italic;
+            background-color: #f9fafb;
+            padding: 0.5em 1em;
+            border-radius: 0.25rem;
+        }
+        .dark .markdown-content blockquote {
+            border-left: 4px solid #a78bfa;
+            color: #9ca3af;
+            background-color: #374151;
+        }
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+        .dark .markdown-content table {
+            border-color: #374151;
+        }
+        .markdown-content th {
+            background-color: #8b5cf6;
+            color: white;
+            font-weight: 600;
+            padding: 0.75em;
+            text-align: left;
+        }
+        .dark .markdown-content th {
+            background-color: #7c3aed;
+            color: #f9fafb;
+        }
+        .markdown-content td {
+            padding: 0.75em;
+            border-top: 1px solid #e5e7eb;
+        }
+        .dark .markdown-content td {
+            border-top: 1px solid #374151;
+        }
+        .markdown-content tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .dark .markdown-content tr:nth-child(even) {
+            background-color: #374151;
+        }
+        .markdown-content a {
+            color: #8b5cf6;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .dark .markdown-content a {
+            color: #a78bfa;
+        }
+        .markdown-content a:hover {
+            color: #7c3aed;
+        }
+        .dark .markdown-content a:hover {
+            color: #8b5cf6;
+        }
+        .markdown-content hr {
+            border: none;
+            border-top: 2px solid #e5e7eb;
+            margin: 2em 0;
+        }
+        .dark .markdown-content hr {
+            border-top: 2px solid #374151;
+        }
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            margin: 1em 0;
+        }
+        .markdown-content strong {
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .dark .markdown-content strong {
+            color: #f9fafb;
+        }
+        .markdown-content em {
+            font-style: italic;
+        }
+    </style>
+</head>
+<body id="theme-body" class="animated-gradient min-h-screen flex items-center justify-center p-4 sm:p-6">
+     <div class="w-full max-w-5xl h-[90vh] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl flex flex-col overflow-hidden backdrop-blur-sm bg-opacity-95 dark:bg-opacity-90">
+         <!-- Header -->
+         <div class="relative bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 dark:from-purple-500 dark:via-pink-400 dark:to-purple-400 text-white dark:text-gray-100 px-6 sm:px-8 py-6 sm:py-8">
+            <div class="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-20 animate-pulse-slow"></div>
+            <div class="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-16 animate-float"></div>
+             <div class="relative z-10 text-center">
+                 <div class="flex items-center justify-center mb-3">
+                     <span class="text-5xl sm:text-6xl animate-pulse-slow">🧘</span>
+                 </div>
+                 <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 tracking-tight">
+                     Third Eye Meditation AI
+                 </h1>
+                 <p class="text-purple-100 dark:text-purple-200 text-sm sm:text-base font-light">
+                     Your compassionate guide to Ajna chakra meditation
+                 </p>
+                 <!-- Theme Toggle -->
+                 <div class="absolute top-4 right-4">
+                     <button id="themeToggle" class="w-8 h-8 rounded-full bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200">
+                         <svg id="themeIcon" class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646M9.638 9.037l1.172-1.172M13.763 3.232l1.172-1.172M15.212 7.788l1.172 1.172M11.296 14.703l1.172 1.172M6.638 13.037l1.172 1.172M10.763 15.232l1.172 1.172M3.212 7.788l1.172-1.172M6.296 3.297l1.172 1.172M12.763 16.732l1.172 1.172M9.212 13.232l1.172-1.172"></path>
+                         </svg>
+                     </button>
+                 </div>
+             </div>
         </div>
+         <!-- Chat Container -->
+         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 custom-scrollbar">
+             <!-- Welcome Message -->
+             <div class="flex gap-3 sm:gap-4 animate-fade-in">
+                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-300 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
+                     🙏
+                 </div>
+                 <div class="flex-1 max-w-3xl">
+                     <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-sm shadow-md border border-purple-100 dark:border-purple-700 p-4 sm:p-5">
+                         <p class="text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base">
+                             Welcome! I'm here to guide you through <span class="font-semibold text-purple-700 dark:text-purple-400">Third Eye (Ajna)</span> meditation practices.
+                             Ask me about techniques, benefits, safety considerations, or any questions about your practice.
+                             All my guidance is grounded in authentic teachings and includes proper citations.
+                         </p>
+                     </div>
+                 </div>
+             </div>
+             <!-- Typing Indicator (hidden by default) -->
+             <div id="typingIndicator" class="hidden flex gap-3 sm:gap-4">
+                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-300 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
+                     🙏
+                 </div>
+                 <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-sm shadow-md border border-purple-100 dark:border-purple-700 p-5 flex items-center gap-2">
+                     <span class="typing-dot w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full"></span>
+                     <span class="typing-dot w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full"></span>
+                     <span class="typing-dot w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full"></span>
+                 </div>
+             </div>
+        </div>
+         <!-- Input Container -->
+         <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 md:px-8 py-4 sm:py-5">
+             <div class="flex gap-3 items-end">
+                 <div class="flex-1 relative">
+                     <input 
+                         type="text" 
+                         id="messageInput" 
+                         placeholder="Ask about Third Eye meditation..."
+                         onkeypress="handleKeyPress(event)"
+                         class="w-full px-5 py-3 sm:py-4 text-sm sm:text-base border-2 border-gray-300 dark:border-gray-600 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent transition-all bg-gray-50 dark:bg-gray-700 hover:bg-white dark:hover:bg-gray-700 placeholder-gray-400 dark:placeholder-gray-500"
+                     >
+                     <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                         </svg>
+                     </div>
+                 </div>
+                 <button 
+                     id="sendButton" 
+                     onclick="sendMessage()"
+                     class="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 dark:from-purple-500 dark:via-pink-400 dark:to-purple-400 text-white dark:text-gray-100 text-sm sm:text-base font-semibold rounded-2xl hover:from-purple-700 hover:via-pink-600 hover:to-purple-800 dark:hover:from-purple-600 dark:hover:via-pink-500 dark:hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                     <span class="hidden sm:inline">Send</span>
+                     <span class="sm:hidden">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                         </svg>
+                     </span>
+                 </button>
+             </div>
+         </div>
     </div>
     <script>
         window.API_BASE_URL = '/api';
@@ -279,23 +646,23 @@
             const container = document.getElementById('chatContainer');
             container.scrollTop = container.scrollHeight;
         }
-        function addUserMessage(message) {
-            const chatContainer = document.getElementById('chatContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'flex gap-3 sm:gap-4 flex-row-reverse';
-            messageDiv.innerHTML = `
-                <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
-                    👤
-                </div>
-                <div class="flex-1 max-w-3xl">
-                    <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl rounded-tr-sm shadow-md p-4 sm:p-5">
-                        <p class="leading-relaxed text-sm sm:text-base">${escapeHtml(message)}</p>
-                    </div>
-                </div>
-            `;
-            chatContainer.appendChild(messageDiv);
-            scrollToBottom();
-        }
+         function addUserMessage(message) {
+             const chatContainer = document.getElementById('chatContainer');
+             const messageDiv = document.createElement('div');
+             messageDiv.className = 'flex gap-3 sm:gap-4 flex-row-reverse';
+             messageDiv.innerHTML = `
+                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-400 dark:to-purple-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
+                     👤
+                 </div>
+                 <div class="flex-1 max-w-3xl">
+                     <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white dark:from-purple-500 dark:to-pink-400 dark:text-gray-100 rounded-2xl rounded-tr-sm shadow-md p-4 sm:p-5">
+                         <p class="leading-relaxed text-sm sm:text-base">${escapeHtml(message)}</p>
+                     </div>
+                 </div>
+             `;
+             chatContainer.appendChild(messageDiv);
+             scrollToBottom();
+         }
         marked.setOptions({
             gfm: true,
             breaks: true,
@@ -336,49 +703,49 @@
                 return escapeHtml(text || '');
             }
         }
-        function addAssistantMessage(message, citations = null) {
-            const chatContainer = document.getElementById('chatContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'flex gap-3 sm:gap-4';
-            const safeHtml = renderMarkdownSafe(message);
-            let citationsHtml = '';
-            if (citations && citations.length > 0) {
-                citationsHtml = `
-                    <div class="mt-4 p-3 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
-                        <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-xs font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Sources (${citations.length})
-                        </button>
-                        <div class="hidden mt-2 space-y-2 text-xs text-gray-700">
-                            ${citations.map((cite, idx) => `
-                                <div class="pl-3 border-l-2 border-purple-300">
-                                    <span class="font-medium">[${idx + 1}]</span> ${escapeHtml(cite)}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            messageDiv.innerHTML = `
-                <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
-                    🙏
-                </div>
-                <div class="flex-1 max-w-3xl">
-                    <div class="bg-white rounded-2xl rounded-tl-sm shadow-md border border-purple-100 p-4 sm:p-5">
-                        <div class="markdown-content text-gray-800 leading-relaxed text-sm sm:text-base">${safeHtml}</div>
-                        ${citationsHtml}
-                    </div>
-                </div>
-            `;
-            messageDiv.querySelectorAll('a').forEach(a => {
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-            });
-            chatContainer.appendChild(messageDiv);
-            scrollToBottom();
-        }
+         function addAssistantMessage(message, citations = null) {
+             const chatContainer = document.getElementById('chatContainer');
+             const messageDiv = document.createElement('div');
+             messageDiv.className = 'flex gap-3 sm:gap-4';
+             const safeHtml = renderMarkdownSafe(message);
+             let citationsHtml = '';
+             if (citations && citations.length > 0) {
+                 citationsHtml = `
+                     <div class="mt-4 p-3 bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-500 dark:border-purple-400 rounded-lg">
+                         <button onclick="this.nextElementSibling.classList.toggle('hidden')" class="text-xs font-semibold text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-200 flex items-center gap-2">
+                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                             </svg>
+                             Sources (${citations.length})
+                         </button>
+                         <div class="hidden mt-2 space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                             ${citations.map((cite, idx) => `
+                                 <div class="pl-3 border-l-2 border-purple-300 dark:border-purple-500">
+                                     <span class="font-medium">[${idx + 1}]</span> ${escapeHtml(cite)}
+                                 </div>
+                             `).join('')}
+                         </div>
+                     </div>
+                 `;
+             }
+             messageDiv.innerHTML = `
+                 <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-400 dark:to-pink-300 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
+                     🙏
+                 </div>
+                 <div class="flex-1 max-w-3xl">
+                     <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-sm shadow-md border border-purple-100 dark:border-purple-700 p-4 sm:p-5">
+                         <div class="markdown-content text-gray-800 dark:text-gray-200 leading-relaxed text-sm sm:text-base">${safeHtml}</div>
+                         ${citationsHtml}
+                     </div>
+                 </div>
+             `;
+             messageDiv.querySelectorAll('a').forEach(a => {
+                 a.target = '_blank';
+                 a.rel = 'noopener noreferrer';
+             });
+             chatContainer.appendChild(messageDiv);
+             scrollToBottom();
+         }
         function showStatus(message, isSuccess = true) {
             const statusDiv = document.getElementById('uploadStatus');
             statusDiv.className = `mt-3 p-3 rounded-lg text-sm font-medium ${isSuccess ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border-red-200'}`;
@@ -397,12 +764,55 @@
             div.textContent = text;
             return div.innerHTML;
         }
-        function handleKeyPress(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        }
+         // Theme toggle functionality
+         function initTheme() {
+             const themeButton = document.getElementById('themeToggle');
+             const themeIcon = document.getElementById('themeIcon');
+             const htmlElement = document.documentElement;
+             const bodyElement = document.getElementById('theme-body');
+             
+             // Check for saved theme preference or use system preference
+             const savedTheme = localStorage.getItem('theme');
+             const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+             
+             if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                 htmlElement.classList.add('dark');
+                 bodyElement.classList.add('dark');
+                 // Set icon to moon (dark mode)
+                 themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3m0 11.47a9 9 0 01-5.657 2.343M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`;
+             } else {
+                 htmlElement.classList.remove('dark');
+                 bodyElement.classList.remove('dark');
+                 // Set icon to sun (light mode)
+                 themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 3a9 9 0 10-9 9m0-2a7 7 0 1114 0M12 11a3 3 0 100-6 3 3 0 000 6z"/>`;
+             }
+         }
+         
+         function toggleTheme() {
+             const htmlElement = document.documentElement;
+             const bodyElement = document.getElementById('theme-body');
+             const themeIcon = document.getElementById('themeIcon');
+             
+             if (htmlElement.classList.contains('dark')) {
+                 htmlElement.classList.remove('dark');
+                 bodyElement.classList.remove('dark');
+                 localStorage.setItem('theme', 'light');
+                 // Set icon to sun (light mode)
+                 themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 3a9 9 0 10-9 9m0-2a7 7 0 1114 0M12 11a3 3 0 100-6 3 3 0 000 6z"/>`;
+             } else {
+                 htmlElement.classList.add('dark');
+                 bodyElement.classList.add('dark');
+                 localStorage.setItem('theme', 'dark');
+                 // Set icon to moon (dark mode)
+                 themeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3m0 11.47a9 9 0 01-5.657 2.343M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`;
+             }
+         }
+         
+         // Initialize theme on page load
+         initTheme();
+         
+         // Add event listener to theme toggle button
+         document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     </script>
     <script src="/static/app.js"></script>
 </body>

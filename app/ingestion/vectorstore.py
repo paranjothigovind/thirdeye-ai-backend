@@ -22,6 +22,13 @@ from app.models.embeddings import embeddings_client
 
 logger = get_logger(__name__)
 
+# Fields the application filters on with OData $filter expressions.
+# These MUST stay `filterable=True` or retrieval fails at query time.
+FILTERABLE_FIELDS = ("doc_id", "version", "is_latest", "source", "page", "section", "context")
+
+# Maximum documents per upload batch (Azure AI Search limit is 1000).
+UPLOAD_BATCH_SIZE = 500
+
 
 class VectorStore:
     """Azure AI Search vector store"""
@@ -43,9 +50,60 @@ class VectorStore:
         
         self._ensure_index()
     
+    @staticmethod
+    def _build_fields() -> list:
+        """Build the index field definitions (single source of truth)."""
+        return [
+            SimpleField(name="id", type=SearchFieldDataType.String, key=True),
+            SimpleField(name="doc_id", type=SearchFieldDataType.String, filterable=True, sortable=True),
+            SimpleField(name="version", type=SearchFieldDataType.Int32, filterable=True, sortable=True),
+            SimpleField(name="is_latest", type=SearchFieldDataType.Boolean, filterable=True),
+            SearchableField(name="title", type=SearchFieldDataType.String),
+            SearchableField(name="content", type=SearchFieldDataType.String),
+            SimpleField(name="source", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="page", type=SearchFieldDataType.Int32, filterable=True),
+            SearchableField(name="section", type=SearchFieldDataType.String, filterable=True),
+            SearchableField(name="url", type=SearchFieldDataType.String),
+            SimpleField(name="context", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="timestamp", type=SearchFieldDataType.DateTimeOffset, sortable=True),
+            SearchField(
+                name="content_vector",
+                type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+                searchable=True,
+                # Retrievable so backups/migrations can export existing vectors
+                # instead of having to re-embed every document.
+                retrievable=True,
+                vector_search_dimensions=settings.EMBEDDING_DIMENSIONS,
+                vector_search_profile_name="default-profile"
+            ),
+        ]
+
+    @staticmethod
+    def build_index() -> SearchIndex:
+        """Build the complete SearchIndex definition (single source of truth)."""
+        vector_search = VectorSearch(
+            profiles=[
+                VectorSearchProfile(
+                    name="default-profile",
+                    algorithm_configuration_name="default-algorithm"
+                )
+            ],
+            algorithms=[
+                HnswAlgorithmConfiguration(name="default-algorithm")
+            ]
+        )
+
+        return SearchIndex(
+            name=settings.AZURE_SEARCH_INDEX,
+            fields=VectorStore._build_fields(),
+            vector_search=vector_search
+        )
+
     def _ensure_index(self):
-        """Ensure search index exists with correct dimensions"""
+        """Ensure search index exists with correct dimensions and filterable fields"""
         try:
+            needs_recreate = False
+
             # Check if index exists
             try:
                 existing_index = self.index_client.get_index(settings.AZURE_SEARCH_INDEX)
@@ -57,85 +115,98 @@ class VectorStore:
                     current_dims = vector_field.vector_search_dimensions
                     if current_dims != settings.EMBEDDING_DIMENSIONS:
                         logger.warning(f"Index has {current_dims} dimensions, but config specifies {settings.EMBEDDING_DIMENSIONS}. Recreating index.")
-                        self.index_client.delete_index(settings.AZURE_SEARCH_INDEX)
-                        logger.info(f"Deleted old index: {settings.AZURE_SEARCH_INDEX}")
-                    else:
-                        return
+                        needs_recreate = True
                 else:
                     logger.warning("Could not determine vector dimensions of existing index. Recreating.")
-                    self.index_client.delete_index(settings.AZURE_SEARCH_INDEX)
-                    logger.info(f"Deleted old index: {settings.AZURE_SEARCH_INDEX}")
+                    needs_recreate = True
+
+                if not needs_recreate:
+                    # Azure AI Search cannot change `filterable` on an existing field,
+                    # so verify the fields we query on are actually filterable.
+                    drift = self._check_filterable_drift(existing_index)
+                    if drift:
+                        logger.error(
+                            "❌ SCHEMA DRIFT: field(s) %s are not filterable in the live index. "
+                            "OData $filter queries (e.g. `context eq '...'`) will fail until the index "
+                            "is recreated. Run `python fix_search_index_schema.py` to repair.",
+                            ", ".join(drift)
+                        )
+                        if settings.AZURE_SEARCH_AUTO_REPAIR:
+                            logger.warning("AZURE_SEARCH_AUTO_REPAIR is enabled - recreating index to repair schema.")
+                            needs_recreate = True
 
             except Exception as e:
                 logger.info(f"Index {settings.AZURE_SEARCH_INDEX} does not exist or error checking: {e}")
-            
-            # Create index
-            fields = [
-                SimpleField(name="id", type=SearchFieldDataType.String, key=True),
-                SimpleField(name="doc_id", type=SearchFieldDataType.String, filterable=True, sortable=True),
-                SimpleField(name="version", type=SearchFieldDataType.Int32, filterable=True, sortable=True),
-                SimpleField(name="is_latest", type=SearchFieldDataType.Boolean, filterable=True),
-                SearchableField(name="title", type=SearchFieldDataType.String),
-                SearchableField(name="content", type=SearchFieldDataType.String),
-                SimpleField(name="source", type=SearchFieldDataType.String, filterable=True),
-                SimpleField(name="page", type=SearchFieldDataType.Int32, filterable=True),
-                SearchableField(name="section", type=SearchFieldDataType.String, filterable=True),
-                SearchableField(name="url", type=SearchFieldDataType.String),
-                SimpleField(name="timestamp", type=SearchFieldDataType.DateTimeOffset, sortable=True),
-                SearchField(
-                    name="content_vector",
-                    type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
-                    searchable=True,
-                    vector_search_dimensions=settings.EMBEDDING_DIMENSIONS,
-                    vector_search_profile_name="default-profile"
-                ),
-            ]
-            
-            # Vector search configuration
-            vector_search = VectorSearch(
-                profiles=[
-                    VectorSearchProfile(
-                        name="default-profile",
-                        algorithm_configuration_name="default-algorithm"
-                    )
-                ],
-                algorithms=[
-                    HnswAlgorithmConfiguration(name="default-algorithm")
-                ]
-            )
-            
-            index = SearchIndex(
-                name=settings.AZURE_SEARCH_INDEX,
-                fields=fields,
-                vector_search=vector_search
-            )
-            
-            self.index_client.create_index(index)
-            logger.info(f"Created index: {settings.AZURE_SEARCH_INDEX}")
+
+            if needs_recreate:
+                try:
+                    self.index_client.delete_index(settings.AZURE_SEARCH_INDEX)
+                    logger.info(f"Deleted old index: {settings.AZURE_SEARCH_INDEX}")
+                except Exception as de:
+                    logger.warning(f"Could not delete index before recreate: {de}")
+
+            if needs_recreate or not self._index_exists():
+                # Create index
+                index = self.build_index()
+                self.index_client.create_index(index)
+                logger.info(f"Created index: {settings.AZURE_SEARCH_INDEX}")
             
         except Exception as e:
             logger.error(f"Error ensuring index: {e}")
             raise
+
+    def _index_exists(self) -> bool:
+        """Check whether the configured index currently exists."""
+        try:
+            self.index_client.get_index(settings.AZURE_SEARCH_INDEX)
+            return True
+        except Exception:
+            return False
+
+    def _check_filterable_drift(self, existing_index) -> list:
+        """Return the names of FILTERABLE_FIELDS that are not filterable in the live index."""
+        live = {f.name: f for f in existing_index.fields}
+        return [name for name in FILTERABLE_FIELDS if name in live and not live[name].filterable]
     
-    async def upsert_documents(
-        self,
-        documents: List[Dict[str, Any]],
-        doc_id: str,
-        version: int = 1
-    ) -> Dict[str, Any]:
+    async def upsert_documents(self, documents: List[Dict[str, Any]], doc_id: str, version: int = 1, context: str = None) -> Dict[str, Any]:
         """Upsert documents with versioning"""
         try:
+            # Validate documents
+            if not documents:
+                logger.warning(f"No documents to upsert for doc_id: {doc_id}")
+                return {
+                    "doc_id": doc_id,
+                    "version": version,
+                    "total_chunks": 0,
+                    "success_count": 0,
+                    "status": "empty",
+                    "message": "No content extracted from document"
+                }
+            
+            # Filter out documents with empty content
+            valid_documents = [doc for doc in documents if doc.get("content", "").strip()]
+            if not valid_documents:
+                logger.warning(f"All documents have empty content for doc_id: {doc_id}")
+                return {
+                    "doc_id": doc_id,
+                    "version": version,
+                    "total_chunks": 0,
+                    "success_count": 0,
+                    "status": "empty",
+                    "message": "No valid content after filtering empty documents"
+                }
+            
             # Mark previous versions as not latest
             if version > 1:
                 await self._mark_old_versions(doc_id)
             
             # Generate embeddings
-            texts = [doc["content"] for doc in documents]
+            texts = [doc["content"] for doc in valid_documents]
             embeddings = await embeddings_client.embed_documents(texts)
             
             # Prepare documents for upload
             search_documents = []
-            for doc, embedding in zip(documents, embeddings):
+            for doc, embedding in zip(valid_documents, embeddings):
                 search_doc = {
                     "id": str(uuid.uuid4()),
                     "doc_id": doc_id,
@@ -148,6 +219,7 @@ class VectorStore:
                     "section": doc.get("section", ""),
                     "url": doc.get("url", ""),
                     "timestamp": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                    "context": context or "",
                     "content_vector": embedding,
                 }
                 search_documents.append(search_doc)
@@ -156,12 +228,12 @@ class VectorStore:
             result = self.search_client.upload_documents(documents=search_documents)
             
             success_count = sum(1 for r in result if r.succeeded)
-            logger.info(f"Upserted {success_count}/{len(documents)} documents for doc_id: {doc_id}")
+            logger.info(f"Upserted {success_count}/{len(valid_documents)} documents for doc_id: {doc_id}")
             
             return {
                 "doc_id": doc_id,
                 "version": version,
-                "total_chunks": len(documents),
+                "total_chunks": len(valid_documents),
                 "success_count": success_count
             }
             
@@ -372,7 +444,7 @@ class VectorStore:
                 logger.warning(f"Index {settings.AZURE_SEARCH_INDEX} may not exist: {e}")
 
             # Recreate the index
-            self._ensure_index()
+            self.index_client.create_index(self.build_index())
             logger.info(f"Recreated index: {settings.AZURE_SEARCH_INDEX}")
 
             return {
@@ -390,3 +462,4 @@ class VectorStore:
 
 # Global vector store instance
 vector_store = VectorStore()
+

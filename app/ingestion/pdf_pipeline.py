@@ -28,6 +28,9 @@ class PDFPipeline:
         metadata: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """Process PDF file end-to-end"""
+        context = None
+        if metadata is not None:
+            context = metadata.get("context")
         try:
             logger.info(f"Processing PDF: {filename}")
             
@@ -42,8 +45,28 @@ class PDFPipeline:
             file_bytes = self.storage.download_file(blob_name)
             documents = self._parse_pdf(file_bytes, filename)
             
+            # Check if any content was extracted
+            if not documents or all(not doc.get("content", "").strip() for doc in documents):
+                logger.warning(f"No text content extracted from PDF: {filename}")
+                return {
+                    "status": "error",
+                    "filename": filename,
+                    "blob_name": blob_name,
+                    "error": "No extractable text found in PDF. The PDF may be scanned, image-only, or password-protected."
+                }
+            
             # Clean and chunk
             chunks = self._chunk_documents(documents, filename)
+            
+            # Check if chunking produced any results
+            if not chunks:
+                logger.warning(f"Chunking produced no chunks for PDF: {filename}")
+                return {
+                    "status": "error",
+                    "filename": filename,
+                    "blob_name": blob_name,
+                    "error": "Failed to create text chunks from PDF content"
+                }
             
             # Determine version
             doc_id = self._generate_doc_id(filename)
@@ -53,8 +76,18 @@ class PDFPipeline:
             result = await self.vector_store.upsert_documents(
                 chunks,
                 doc_id=doc_id,
-                version=version
+                version=version,
+                context=context
             )
+            
+            # Handle empty result from vector store
+            if result.get("status") == "empty":
+                return {
+                    "status": "error",
+                    "filename": filename,
+                    "blob_name": blob_name,
+                    "error": result.get("message", "No valid content to index")
+                }
             
             return {
                 "status": "success",

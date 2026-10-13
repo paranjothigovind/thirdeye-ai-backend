@@ -1,8 +1,9 @@
-"""Azure Blob Storage integration"""
+﻿"""Azure Blob Storage integration"""
 from typing import BinaryIO, Optional, Dict, Any
 from azure.storage.blob import BlobServiceClient, BlobClient
 from datetime import datetime
 import uuid
+import re
 
 from app.core.config import settings
 from app.core.logging import get_logger

@@ -9,6 +9,8 @@ import uuid
 from app.core.logging import get_logger
 from app.rag.chains import rag_chain
 from app.rag.guardrails import guardrails
+from app.rag.course_class_agent import course_class_agent
+from app.rag.post_class_support_agent import post_class_support_agent
 
 logger = get_logger(__name__)
 
@@ -69,13 +71,22 @@ async def chat(request: ChatRequest):
                 request_id=request_id
             )
         
+        # Select agent based on persona
+        agent = rag_chain  # Default to standard RAG chain
+        if request.persona:
+            persona_lower = request.persona.lower()
+            if "course" in persona_lower or "class" in persona_lower:
+                agent = course_class_agent
+            elif "post" in persona_lower or "support" in persona_lower:
+                agent = post_class_support_agent
+        
         # Stream response
         if request.stream:
             async def generate():
                 try:
                     full_response = ""
                     
-                    async for chunk in rag_chain.invoke(query, use_angelitic=True, stream=True):
+                    async for chunk in agent.invoke(query, stream=True):
                         full_response += chunk
                         
                         # Send chunk
@@ -92,7 +103,7 @@ async def chat(request: ChatRequest):
                         full_response = guardrails.add_disclaimers(full_response, disclaimer_types)
                     
                     # Extract citations
-                    citations = rag_chain.extract_citations(full_response)
+                    citations = agent.extract_citations(full_response) if hasattr(agent, 'extract_citations') else rag_chain.extract_citations(full_response)
                     
                     # Send citations
                     yield f"data: {json.dumps({'citations': [c for c in citations], 'type': 'citations'})}\n\n"
@@ -116,7 +127,7 @@ async def chat(request: ChatRequest):
         # Non-streaming response
         else:
             full_response = ""
-            async for chunk in rag_chain.invoke(query, use_angelitic=True, stream=False):
+            async for chunk in agent.invoke(query, stream=False):
                 full_response += chunk
             
             # Check and add disclaimers
@@ -127,7 +138,7 @@ async def chat(request: ChatRequest):
                 full_response = guardrails.add_disclaimers(full_response, disclaimer_types)
             
             # Extract citations
-            citations = rag_chain.extract_citations(full_response)
+            citations = agent.extract_citations(full_response) if hasattr(agent, 'extract_citations') else rag_chain.extract_citations(full_response)
             
             return ChatResponse(
                 response=full_response,

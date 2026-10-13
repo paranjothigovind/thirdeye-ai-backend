@@ -61,7 +61,7 @@ def process_pdf_task(blob_name: str, filename: str, metadata: Dict[str, Any] = N
 
 
 @celery_app.task(name="process_urls_task")
-def process_urls_task(urls: list) -> Dict[str, Any]:
+def process_urls_task(urls: list, context: str = None) -> Dict[str, Any]:
     """Background task for web scraping"""
     try:
         logger.info(f"Starting web scraping task for {len(urls)} URLs")
@@ -69,11 +69,11 @@ def process_urls_task(urls: list) -> Dict[str, Any]:
         # Run async function in sync context
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
+        
         results = loop.run_until_complete(
-            web_pipeline.process_urls(urls)
+            web_pipeline.process_urls(urls, context)
         )
         loop.close()
-        
         # Aggregate results
         success_count = sum(1 for r in results if r["status"] == "success")
         

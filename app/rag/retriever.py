@@ -10,6 +10,9 @@ from app.models.embeddings import embeddings_client
 
 logger = get_logger(__name__)
 
+# Fields retrieved for every hit (shared by hybrid and text-only search).
+SELECT_FIELDS = ["id", "content", "title", "source", "page", "url", "section", "version", "context"]
+
 
 class HybridRetriever:
     """Fixed hybrid retrieval using Azure AI Search"""
@@ -49,54 +52,86 @@ class HybridRetriever:
             # ---- 3) Build filter string ----
             filter_str = self._build_filter_string(filters)
 
-            
-            results = self.search_client.search(
-                search_text=query,
-                vector_queries=[vector_query],
-                filter=filter_str,
-                select=["id", "content", "title", "source", "page", "url", "section", "version"],
-                top=k,
-                query_type="simple",
-            )
-
-        
-
-            # ---- 5) Process results ----
+            # ---- 4) Search ----
             docs = []
-            result_count = 0
-            
-            for item in results:
-                result_count += 1
-                doc = {
-                    "content": item.get("content", ""),
-                    "title": item.get("title", ""),
-                    "source": item.get("source", ""),
-                    "page": item.get("page"),
-                    "url": item.get("url"),
-                    "section": item.get("section", ""),
-                    "version": item.get("version"),
-                    "score": item.get("@search.score", 0.0),
-                }
-                docs.append(doc)
-                
-                if result_count <= 3:
-                    logger.info(
-                        f"📄 Result {result_count}: "
-                        f"score={doc['score']:.4f}, "
-                        f"section='{doc.get('section', 'N/A')}', "
-                        f"title='{doc['title'][:50]}...'"
+            if filter_str:
+                try:
+                    docs = self._hybrid_search(query, vector_query, filter_str, k)
+                except Exception as e:
+                    # A filter failure (e.g. "context is not a filterable field")
+                    # must not break the whole chat request - degrade gracefully.
+                    logger.error(
+                        "❌ Filtered hybrid search failed: %s\n"
+                        "   Retrying without the filter so the user still gets an answer.\n"
+                        "   If the error mentions a non-filterable field, the index schema has "
+                        "drifted - run `python fix_search_index_schema.py` to repair it.",
+                        e
                     )
+                    docs = []
 
-            # ---- 6) Fallback if needed ----
-            if len(docs) == 0:
-                logger.warning("⚠️ Hybrid search returned 0 results. Trying pure TEXT search...")
-                return await self._text_only_search(query, filters, k)
+            if not docs:
+                if not filter_str:
+                    docs = self._hybrid_search(query, vector_query, None, k)
+                if not docs:
+                    logger.warning("⚠️ Hybrid search returned 0 results. Trying pure TEXT search...")
+                    return await self._text_only_search(query, filters, k)
 
             return docs
 
         except Exception as e:
             logger.error(f"❌ Error in retrieve(): {e}", exc_info=True)
             raise
+
+    def _hybrid_search(
+        self,
+        query: str,
+        vector_query: VectorizedQuery,
+        filter_str: Optional[str],
+        k: int
+    ) -> List[Dict[str, Any]]:
+        """Run hybrid search and materialise results.
+
+        The Azure Search client is lazy: OData errors only surface while the
+        result pages are iterated, so results are consumed here and not
+        returned to the caller for later iteration.
+        """
+        results = self.search_client.search(
+            search_text=query,
+            vector_queries=[vector_query],
+            filter=filter_str,
+            select=SELECT_FIELDS,
+            top=k,
+            query_type="simple",
+        )
+
+        docs = []
+        result_count = 0
+
+        for item in results:
+            result_count += 1
+            doc = {
+                "content": item.get("content", ""),
+                "title": item.get("title", ""),
+                "source": item.get("source", ""),
+                "page": item.get("page"),
+                "url": item.get("url"),
+                "section": item.get("section", ""),
+                "version": item.get("version"),
+                "context": item.get("context"),
+                "score": item.get("@search.score", 0.0),
+            }
+            docs.append(doc)
+
+            if result_count <= 3:
+                logger.info(
+                    f"📄 Result {result_count}: "
+                    f"score={doc['score']:.4f}, "
+                    f"section='{doc.get('section', 'N/A')}', "
+                    f"context='{doc.get('context', 'N/A')}', "
+                    f"title='{doc['title'][:50]}...'"
+                )
+
+        return docs
 
     async def _text_only_search(
         self,
@@ -109,26 +144,59 @@ class HybridRetriever:
             
             filter_str = self._build_filter_string(filters)
             
-            text_results = self.search_client.search(
-                search_text=query,
-                filter=filter_str,
-                select=["id", "content", "title", "source", "page", "url", "section", "version"],
-                top=k,
-                query_type="simple",
-            )
+            try:
+                text_results = self.search_client.search(
+                    search_text=query,
+                    filter=filter_str,
+                    select=SELECT_FIELDS,
+                    top=k,
+                    query_type="simple",
+                )
 
-            docs = []
-            for item in text_results:
-                docs.append({
-                    "content": item.get("content", ""),
-                    "title": item.get("title", ""),
-                    "source": item.get("source", ""),
-                    "page": item.get("page"),
-                    "url": item.get("url"),
-                    "section": item.get("section", ""),
-                    "version": item.get("version"),
-                    "score": item.get("@search.score", 0.0),
-                })
+                docs = []
+                for item in text_results:
+                    docs.append({
+                        "content": item.get("content", ""),
+                        "title": item.get("title", ""),
+                        "source": item.get("source", ""),
+                        "page": item.get("page"),
+                        "url": item.get("url"),
+                        "section": item.get("section", ""),
+                        "version": item.get("version"),
+                        "context": item.get("context"),
+                        "score": item.get("@search.score", 0.0),
+                    })
+
+            except Exception as e:
+                if not filter_str:
+                    raise
+                logger.error(
+                    "❌ Filtered text search failed: %s\n"
+                    "   Retrying without the filter so the user still gets an answer.\n"
+                    "   If the error mentions a non-filterable field, the index schema has "
+                    "   drifted - run `python fix_search_index_schema.py` to repair it.",
+                    e
+                )
+                text_results = self.search_client.search(
+                    search_text=query,
+                    filter=None,
+                    select=SELECT_FIELDS,
+                    top=k,
+                    query_type="simple",
+                )
+                docs = []
+                for item in text_results:
+                    docs.append({
+                        "content": item.get("content", ""),
+                        "title": item.get("title", ""),
+                        "source": item.get("source", ""),
+                        "page": item.get("page"),
+                        "url": item.get("url"),
+                        "section": item.get("section", ""),
+                        "version": item.get("version"),
+                        "context": item.get("context"),
+                        "score": item.get("@search.score", 0.0),
+                    })
 
             
             if len(docs) == 0:
