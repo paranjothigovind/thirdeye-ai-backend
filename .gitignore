@@ -60,4 +60,20 @@ Thumbs.db
 .vercel
 
 node_modules
-.env.example
+
+# Tool caches
+.ruff_cache/
+.mypy_cache/
+
+# Editor scratch files and archives
+Untitled-*.ini
+*.zip
+
+# Local databases (contain user data / password hashes) - never commit
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.db.bak
+*.sqlite
+*.sqlite3

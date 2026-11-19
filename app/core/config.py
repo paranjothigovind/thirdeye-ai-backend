@@ -53,8 +53,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./thirdeye.db"
 
     # Authentication
-    SECRET_KEY: str = "your-secret-key-here"
-    JWT_SECRET_KEY: str = "your-jwt-secret-key-here"
+    # Required: no built-in fallback. Generate with:
+    #   python -c "import secrets; print(secrets.token_urlsafe(48))"
+    SECRET_KEY: str
+    JWT_SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # RAG Configuration
@@ -65,6 +67,17 @@ class Settings(BaseSettings):
 
     # Web Scraping
     WEB_SCRAPING_RPS: float = 2.0
+
+    @field_validator('SECRET_KEY', 'JWT_SECRET_KEY')
+    @classmethod
+    def validate_signing_secret(cls, v, info):
+        value = (v or "").strip()
+        if len(value) < 32 or value.lower().startswith(("change-me", "your-")):
+            raise ValueError(
+                f"{info.field_name} must be a random secret of at least 32 characters "
+                "(generate one with: python -c \"import secrets; print(secrets.token_urlsafe(48))\")"
+            )
+        return value
 
     @field_validator('CORS_ORIGINS', mode='before')
     @classmethod
