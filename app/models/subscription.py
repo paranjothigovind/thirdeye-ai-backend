@@ -16,6 +16,7 @@ class Subscription(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    plan_id = Column(Integer, ForeignKey("plans.id"), nullable=True)
     type = Column(Enum(SubscriptionType), default=SubscriptionType.FREE)
     start_date = Column(DateTime(timezone=True), server_default=func.now())
     end_date = Column(DateTime(timezone=True), nullable=True)
@@ -25,3 +26,5 @@ class Subscription(Base):
 
     # Relationship to user
     user = relationship("User", back_populates="subscriptions")
+    # Relationship to plan
+    plan = relationship("Plan", back_populates="subscriptions")
