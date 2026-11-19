@@ -1,0 +1,122 @@
+{
+  "course": {
+    "external_id": "5ht61bqjl4",
+    "slug": "netrikkan-meditation",
+    "title": "நெற்றிக்கண் தியானம்",
+    "description": null,
+    "thumbnail_url": null,
+    "price": 999,
+    "currency": "INR",
+    "published": true
+  },
+  "chapters": [
+    {
+      "idx": 1,
+      "title": "1️⃣ அறிமுக வகுப்பு",
+      "lessons": [
+        {"title": "அறிமுக வகுப்பு", "youtube": "https://www.youtube.com/watch?v=96I1bCQej-w", "include_in_preview": 1, "number": "1-2"}
+      ]
+    },
+    {
+      "idx": 2,
+      "title": "2️⃣ தொலைதூர தீட்சை வழங்கல்",
+      "lessons": [
+        {"title": "நெற்றிக்கண் பயிற்சி வகுப்பு", "youtube": "https://www.youtube.com/watch?v=FFY8taTd9rQ", "include_in_preview": 0, "number": "2-1"}
+      ]
+    },
+    {
+      "idx": 3,
+      "title": "3️⃣ உணவு முறைகள் & தவிர்க்க வேண்டியவை",
+      "lessons": [
+        {"title": "நெற்றிக்கண்/தியானம்/ உணவு முறைகள்", "youtube": "https://www.youtube.com/watch?v=PpPapEIDYeM", "include_in_preview": 0, "number": "3-1"}
+      ]
+    },
+    {
+      "idx": 4,
+      "title": "4️⃣ முதுகுத்தண்டு சுத்திகரிப்பு பயிற்சி",
+      "lessons": [
+        {"title": "முதுகு தண்டு சுத்தம்", "youtube": "https://www.youtube.com/watch?v=mf7zEI0QUQk", "include_in_preview": 0, "number": "4-1"}
+      ]
+    },
+    {
+      "idx": 5,
+      "title": "5️⃣ எதிர்மறை எண்ணங்கள் & தீய ஆற்றல் நீக்கம்",
+      "lessons": [
+        {"title": "உடலில் / தீய அணுக்களை மனதில் / தீய எண்ணங்களை வெளியேற்றுவது", "youtube": "https://www.youtube.com/watch?v=9SJ2FuA84cA", "include_in_preview": 0, "number": "5-1"}
+      ]
+    },
+    {
+      "idx": 6,
+      "title": "6️⃣ பிரபஞ்ச ஆற்றலை உடலில் நிரப்பும் பயிற்சி",
+      "source_name": "0027 4️⃣ முதுகுத்தண்டு சுத்திகரிப்பு பயிற்சி",
+      "lessons": [
+        {"title": "பிரபஞ்ச ஆற்றலை உடலில் நிரப்பும் பயிற்சி", "youtube": "https://www.youtube.com/watch?v=cRQYlXzB4vM", "include_in_preview": 0, "number": "6-1"}
+      ]
+    },
+    {
+      "idx": 7,
+      "title": "7️⃣ நெற்றிக்கண்ணில் சத்தங்களை கவனிக்கும் பயிற்சி",
+      "lessons": [
+        {"title": "நெற்றிக்கண்ணில் சத்தங்களை கவனிக்கும் பயிற்சி", "youtube": "https://www.youtube.com/watch?v=vBR0gH8POYs", "include_in_preview": 0, "number": "7-1"}
+      ]
+    },
+    {
+      "idx": 8,
+      "title": "8️⃣ மெய்உணர்வுடன் சுவைகளை உணரும் பயிற்சி",
+      "lessons": [
+        {"title": "மெய்உணர்வுடன் சுவைகளை உணரும் பயிற்சி", "youtube": "https://www.youtube.com/watch?v=YLc5RfkuoKo", "include_in_preview": 0, "number": "8-1"}
+      ]
+    },
+    {
+      "idx": 9,
+      "title": "9️⃣ நெற்றிக்கண்ணில் உருவங்களை காணும் பயிற்சி",
+      "lessons": [
+        {"title": "நெற்றிக்கண்ணில் உருவங்களை காணும் பயிற்சி", "youtube": "https://www.youtube.com/watch?v=Vls_NkOJzCA", "include_in_preview": 0, "number": "9-1"}
+      ]
+    },
+    {
+      "idx": 10,
+      "title": "🔟 வாசனையை உணரும் (Smell Awareness) பயிற்சி",
+      "lessons": [
+        {"title": "🔟 வாசனையை உணரும் (Smell Awareness) பயிற்சி", "youtube": "https://www.youtube.com/watch?v=tPTZkpEZjSI", "include_in_preview": 0, "number": "10-1"}
+      ]
+    },
+    {
+      "idx": 11,
+      "title": "1️⃣1️⃣ தூக்கத்திலும்  தியானம் (Sleep Meditation)",
+      "lessons": [
+        {"title": "தூக்கத்திலும்  தியானம் (Sleep Meditation)", "youtube": "https://www.youtube.com/watch?v=tPTZkpEZjSI", "include_in_preview": 0, "number": "11-1"}
+      ]
+    },
+    {
+      "idx": 12,
+      "title": "1️⃣2️⃣ புகைப்பட தியானம்",
+      "lessons": [
+        {"title": "புகைப்பட தியானம்", "youtube": "https://www.youtube.com/watch?v=jBHlp5a2aBs", "include_in_preview": 0, "number": "12-1"}
+      ]
+    },
+    {
+      "idx": 13,
+      "title": "1️⃣3️⃣ தூர தகவல் உணர்வு (Telepathy) பயிற்சி",
+      "lessons": [
+        {"title": "தூர தகவல் உணர்வு (Telepathy) பயிற்சி", "youtube": "https://www.youtube.com/watch?v=9afXF4YWY6w", "include_in_preview": 0, "number": "13-1"}
+      ]
+    },
+    {
+      "idx": 14,
+      "title": "1️⃣4️⃣ “எண்ணங்களே நீங்கள்” – சுய உணர்வு பயிற்சி",
+      "lessons": [
+        {"title": "எண்ணங்களே நீங்கள்” – சுய உணர்வு பயிற்சி -1", "youtube": "https://www.youtube.com/watch?v=jSjUFb3h5yI", "include_in_preview": 0, "number": "14-1"},
+        {"title": "எண்ணங்களே நீங்கள்” – சுய உணர்வு பயிற்சி -2", "youtube": "https://www.youtube.com/watch?v=KWQpNPJ67PQ", "include_in_preview": 0, "number": "14-2"},
+        {"title": "எண்ணங்களே நீங்கள்” – சுய உணர்வு பயிற்சி -3", "youtube": "https://www.youtube.com/watch?v=mYpj7BbyA7E", "include_in_preview": 0, "number": "14-3"}
+      ]
+    },
+    {
+      "idx": 15,
+      "title": "1️⃣5️⃣ மூலக்கண் தியானம்",
+      "lessons": [
+        {"title": "மூலக்கண் தியானம்", "youtube": "https://www.youtube.com/watch?v=mYpj7BbyA7E", "include_in_preview": 0, "number": "15-1"}
+      ]
+    }
+  ]
+}
