@@ -7,8 +7,11 @@ import operator
 from app.core.logging import get_logger
 from app.rag.retriever import hybrid_retriever
 from app.rag.prompts import SYSTEM_PROMPT, QUERY_REWRITE_PROMPT
-from app.models.azure_openai import azure_openai_client
+from app.models.provider_factory import get_llm_provider
+from app.rag.conversation import build_generation_messages
 from app.rag.guardrails import guardrails
+from app.rag.citations import build_citations, strip_source_tags
+import uuid
 
 logger = get_logger(__name__)
 
@@ -23,6 +26,8 @@ class GraphState(TypedDict):
     needs_retry: bool
     retry_count: int
     messages: Annotated[List[Dict[str, str]], operator.add]
+    # Prior user/assistant turns supplied with this request (replaced, not accumulated)
+    history: List[Dict[str, str]]
 
 
 class RAGGraph:
@@ -31,7 +36,7 @@ class RAGGraph:
     def __init__(self):
         """Initialize RAG graph"""
         self.retriever = hybrid_retriever
-        self.llm = azure_openai_client
+        self.llm = get_llm_provider()
         self.guardrails = guardrails
         self.max_retries = 2
         
@@ -98,7 +103,8 @@ class RAGGraph:
             ):
                 rewritten += chunk
             
-            logger.info(f"Rewrote query: '{query}' -> '{rewritten}'")
+            # Lengths only: query text is conversation content and is never logged
+            logger.info(f"Rewrote query ({len(query)} chars -> {len(rewritten.strip())} chars)")
             
             return {
                 **state,
@@ -170,10 +176,9 @@ class RAGGraph:
             context = self._format_context(documents)
             
             # Generate response
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
-            ]
+            messages = build_generation_messages(
+                SYSTEM_PROMPT, context, query, state.get("history") or []
+            )
             
             response = ""
             async for chunk in self.llm.generate_response(messages, stream=False):
@@ -194,8 +199,12 @@ class RAGGraph:
         # Check with guardrails
         check = self.guardrails.check_response(response)
         
-        # Decide if retry needed
-        critical_issues = ["missing_citations", "contains_medical_advice"]
+        # Decide if retry needed. Sources are attached server-side from the
+        # retrieved documents, so a missing in-text citation is only critical
+        # when nothing was retrieved.
+        critical_issues = ["contains_medical_advice"]
+        if not state.get("documents"):
+            critical_issues.append("missing_citations")
         has_critical_issue = any(issue in check["issues"] for issue in critical_issues)
         needs_retry = has_critical_issue and retry_count < self.max_retries
         
@@ -213,17 +222,13 @@ class RAGGraph:
         return "retry" if state.get("needs_retry", False) else "continue"
     
     async def _add_citations_node(self, state: GraphState) -> GraphState:
-        """Extract and add citations"""
-        response = state.get("response", "")
-        
-        # Extract citations
-        from app.rag.chains import RAGChain
-        chain = RAGChain()
-        citations = chain.extract_citations(response)
-        
-        logger.info(f"Extracted {len(citations)} citations")
-        
-        return {**state, "citations": citations}
+        """Attach Sources from the retrieved documents; strip internal tags"""
+        response = strip_source_tags(state.get("response", ""))
+        citations = build_citations(state.get("documents", []))
+
+        logger.info(f"Attached {len(citations)} sources")
+
+        return {**state, "response": response, "citations": citations}
     
     def _format_context(self, documents: List[Dict[str, Any]]) -> str:
         """Format documents as context"""
@@ -250,8 +255,19 @@ class RAGGraph:
         
         return "\n".join(context_parts)
     
-    async def invoke(self, query: str, thread_id: str = "default") -> Dict[str, Any]:
-        """Invoke the graph"""
+    async def invoke(
+        self,
+        query: str,
+        thread_id: str = "default",
+        history: List[Dict[str, str]] | None = None,
+    ) -> Dict[str, Any]:
+        """Invoke the graph.
+
+        ``thread_id`` is client-supplied and only echoed back. Checkpoints are
+        keyed by a fresh per-request ID and deleted afterwards, so no
+        conversation state is retained in memory and one client cannot address
+        another's state.
+        """
         initial_state = {
             "query": query,
             "rewritten_query": "",
@@ -260,17 +276,21 @@ class RAGGraph:
             "citations": [],
             "needs_retry": False,
             "retry_count": 0,
-            "messages": []
+            "messages": [],
+            "history": list(history or []),
         }
         
-        config = {"configurable": {"thread_id": thread_id}}
-        
+        checkpoint_id = f"run-{uuid.uuid4().hex}"
+        config = {"configurable": {"thread_id": checkpoint_id}}
+
         try:
             result = await self.graph.ainvoke(initial_state, config)
             return result
         except Exception as e:
-            logger.error(f"Error in graph execution: {e}")
+            logger.error(f"Error in graph execution: {type(e).__name__}")
             raise
+        finally:
+            await self.graph.checkpointer.adelete_thread(checkpoint_id)
 
 
 # Global graph instance

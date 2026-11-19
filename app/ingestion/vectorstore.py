@@ -459,6 +459,34 @@ class VectorStore:
                 "error": str(e)
             }
 
+    async def delete_by_context(self, context: str) -> Dict[str, Any]:
+        """Delete all documents matching a given context"""
+        try:
+            results = self.search_client.search(
+                search_text="*",
+                filter=f"context eq '{context}'",
+                select=["id"]
+            )
+
+            docs_to_delete = [{"id": r["id"]} for r in results]
+
+            if docs_to_delete:
+                self.search_client.delete_documents(documents=docs_to_delete)
+                logger.info(f"Deleted {len(docs_to_delete)} documents with context: {context}")
+
+            return {
+                "status": "success",
+                "context": context,
+                "deleted_count": len(docs_to_delete)
+            }
+        except Exception as e:
+            logger.error(f"Error deleting by context: {e}")
+            return {
+                "status": "error",
+                "context": context,
+                "error": str(e)
+            }
+
 
 # Global vector store instance
 vector_store = VectorStore()

@@ -25,6 +25,13 @@ class JSONFormatter(logging.Formatter):
             log_data["job_id"] = record.job_id
         if hasattr(record, "user_id"):
             log_data["user_id"] = record.user_id
+        # Structured, allowlisted fields (never conversation content or credentials)
+        if hasattr(record, "event"):
+            log_data["event"] = record.event
+        if hasattr(record, "llm") and isinstance(record.llm, dict):
+            log_data["llm"] = record.llm
+        if hasattr(record, "usage") and isinstance(record.usage, dict):
+            log_data["usage"] = record.usage
             
         # Add exception info if present
         if record.exc_info:
@@ -50,6 +57,7 @@ def setup_logging():
     logging.getLogger("azure").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("openai").setLevel(logging.WARNING)
+    logging.getLogger("anthropic").setLevel(logging.WARNING)
 
 
 def get_logger(name: str) -> logging.Logger:

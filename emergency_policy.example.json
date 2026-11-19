@@ -1,0 +1,15 @@
+{
+  "_comment": "Template only. Copy, fill in, and point EMERGENCY_POLICY_FILE at the copy. Contacts are shown only when contacts_approval.approved_by and approved_on are set; keywords are used only when keywords.reviewed_by is set. Use only contact details verified from official sources and approved by the Netrikkan team. Tamil keywords must be reviewed by a native Tamil speaker.",
+  "region": "IN",
+  "contacts_approval": {
+    "approved_by": "",
+    "approved_on": ""
+  },
+  "contacts": [
+    { "name": "", "value": "" }
+  ],
+  "keywords": {
+    "reviewed_by": "",
+    "terms": []
+  }
+}

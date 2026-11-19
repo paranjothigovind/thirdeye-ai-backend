@@ -39,4 +39,4 @@ async def test_ingest_validation():
     """Test ingest endpoint validation"""
     # No file or URLs
     response = client.post("/api/ingest")
-    assert response.status_code == 422
+    assert response.status_code == 400

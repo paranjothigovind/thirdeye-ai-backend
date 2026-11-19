@@ -4,7 +4,8 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 from app.core.logging import get_logger
-from app.models.azure_openai import azure_openai_client
+from app.models.provider_factory import get_llm_provider
+from app.rag.conversation import build_generation_messages
 from app.rag.retriever import hybrid_retriever
 from app.rag.prompts import SYSTEM_PROMPT
 
@@ -17,12 +18,14 @@ class PostClassSupportAgent:
     def __init__(self):
         """Initialize Post-Class Support Agent"""
         self.retriever = hybrid_retriever
-        self.llm = azure_openai_client
+        self.llm = get_llm_provider()
     
     async def invoke(
         self,
         query: str,
-        stream: bool = True
+        stream: bool = True,
+        history: List[Dict[str, str]] | None = None,
+        sources: List[Dict[str, Any]] | None = None,
     ) -> AsyncIterator[str]:
         """Run Post-Class Support Agent with streaming"""
         try:
@@ -32,13 +35,12 @@ class PostClassSupportAgent:
                 filters={"context": "post_class_support"}
             )
             logger.info(f"âœ… Retrieved {len(documents)} documents for Post-Class Support Agent context")
+            if sources is not None:
+                sources.extend(documents or [])
             context = self._format_context(documents)
             
             # Generate response with post-class specific instructions
-            messages = [
-                {"role": "system", "content": self._get_system_prompt()},
-                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
-            ]
+            messages = build_generation_messages(self._get_system_prompt(), context, query, history)
             
             async for chunk in self.llm.generate_response(messages, stream=stream):
                 yield chunk
@@ -115,7 +117,7 @@ class PostClassSupportAgent:
         import re
         
         # Pattern: [Source: title, page/url]
-        pattern = r'\[Source:\s*([^,]+),\s*([^\]]+)\]'
+        pattern = r'\[Source:\s*([^,\]]+),\s*([^\]]+)\]'
         matches = re.findall(pattern, response)
         
         citations = []

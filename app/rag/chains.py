@@ -4,7 +4,8 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 from app.core.logging import get_logger
-from app.models.azure_openai import azure_openai_client
+from app.models.provider_factory import get_llm_provider
+from app.rag.conversation import build_generation_messages
 from app.rag.retriever import hybrid_retriever
 from app.rag.prompts import SYSTEM_PROMPT, ANGELITIC_RAG_PROMPT
 
@@ -17,29 +18,36 @@ class RAGChain:
     def __init__(self):
         """Initialize RAG chain"""
         self.retriever = hybrid_retriever
-        self.llm = azure_openai_client
+        self.llm = get_llm_provider()
     
     async def invoke(
         self,
         query: str,
         use_angelitic: bool = True,
-        stream: bool = True
+        stream: bool = True,
+        history: List[Dict[str, str]] | None = None,
+        sources: List[Dict[str, Any]] | None = None,
     ) -> AsyncIterator[str]:
-        """Run RAG chain with streaming"""
+        """Run RAG chain with streaming.
+
+        ``history`` holds prior user/assistant turns for this request only;
+        retrieval always uses the current ``query``. If ``sources`` is given, the
+        documents supplied to the model are appended to it (per call, so it is
+        safe under concurrent requests).
+        """
         try:
             # Retrieve context
             if use_angelitic:
-                context = await self._retrieve_angelitic_context(query)
+                context = await self._retrieve_angelitic_context(query, sources)
             else:
                 documents = await self.retriever.retrieve(query)
                 logger.info(f"✅ Retrieved {len(documents)} documents for RAG context")
+                if sources is not None:
+                    sources.extend(documents or [])
                 context = self._format_context(documents)
             
             # Generate response
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
-            ]
+            messages = build_generation_messages(SYSTEM_PROMPT, context, query, history)
             
             async for chunk in self.llm.generate_response(messages, stream=stream):
                 yield chunk
@@ -48,7 +56,9 @@ class RAGChain:
             logger.error(f"Error in RAG chain: {e}")
             raise
     
-    async def _retrieve_angelitic_context(self, query: str) -> str:
+    async def _retrieve_angelitic_context(
+        self, query: str, sources: List[Dict[str, Any]] | None = None
+    ) -> str:
         """Retrieve context using Angelitic RAG layers with robust fallbacks"""
         # Retrieve from each layer with resilience to errors/None
         try:
@@ -77,7 +87,9 @@ class RAGChain:
         safety_docs = safety_docs or []
         practices_docs = practices_docs or []
         qa_docs = qa_docs or []
-        
+        if sources is not None:
+            sources.extend(canonical_docs + safety_docs + practices_docs + qa_docs)
+
         # Format each layer
         canonical_context = self._format_context(canonical_docs)
         safety_context = self._format_context(safety_docs)
@@ -122,8 +134,9 @@ class RAGChain:
         """Extract citations from response"""
         import re
         
-        # Pattern: [Source: title, page/url]
-        pattern = r'\[Source:\s*([^,]+),\s*([^\]]+)\]'
+        # Pattern: [Source: title, page/url] (a match never spans two tags).
+        # Kept for compatibility; API responses use server-side Sources (app.rag.citations).
+        pattern = r'\[Source:\s*([^,\]]+),\s*([^\]]+)\]'
         matches = re.findall(pattern, response)
         
         citations = []

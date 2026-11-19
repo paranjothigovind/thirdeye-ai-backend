@@ -213,12 +213,40 @@ async def get_document_status(doc_id: str):
         )
 
 
+class ContextDeleteRequest(BaseModel):
+    """Context delete request"""
+    context: str = Field(..., description="Context to delete embeddings for")
+
+
+class DeleteByContextResponse(BaseModel):
+    """Delete by context response"""
+    status: str
+    context: str
+    deleted_count: int
+    error: Optional[str] = None
+
+
 class ClearResponse(BaseModel):
     """Clear response"""
     status: str
     message: str
     vector_result: Optional[Dict[str, Any]] = None
     storage_result: Optional[Dict[str, Any]] = None
+
+
+@router.delete("/context/{context}", response_model=DeleteByContextResponse)
+async def delete_by_context(context: str):
+    """Delete all embeddings for a given context"""
+    try:
+        result = await vector_store.delete_by_context(context)
+        return DeleteByContextResponse(**result)
+
+    except Exception as e:
+        logger.error(f"Error deleting by context: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
 
 @router.post("/clear", response_model=ClearResponse)
