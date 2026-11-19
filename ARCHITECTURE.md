@@ -72,7 +72,7 @@ The Third Eye Meditation AI Chatbot is a production-ready RAG (Retrieval-Augment
 - `routes_health.py` - Health and readiness checks
 
 **Key Features:**
-- Streaming Server-Sent Events (SSE) for real-time responses
+- Streaming Server-Sent Events (SSE); responses are validated before any text is sent
 - Request validation with Pydantic
 - Error handling and logging
 - CORS configuration
@@ -153,16 +153,81 @@ Clean → Chunk → Embed → Upsert to Vector DB
 
 ### 4. Models (`app/models/`)
 
-**Purpose:** Azure OpenAI integration
+**Purpose:** LLM generation providers and Azure OpenAI embeddings
+
+Generation is behind a small provider abstraction, so the RAG layer never
+imports a vendor SDK. Embeddings are **not** part of it: they always use Azure
+OpenAI so the vectors stay compatible with the existing Azure AI Search index.
+
+```
+RAG chain / agents / LangGraph nodes
+        │  self.llm.generate_response(messages, stream)
+        ▼
+LLMProvider (base.py) ──── generate() / stream() / aclose()
+   ├── AzureOpenAIClient   (azure_openai.py, LangChain AzureChatOpenAI)
+   └── AnthropicProvider   (anthropic_claude.py, official anthropic SDK)
+        ▲
+provider_factory.get_llm_provider()  ← LLM_PROVIDER setting
+```
 
 **Components:**
 
-#### a. Azure OpenAI Client (`azure_openai.py`)
-- **Streaming:** Async token-by-token generation
-- **Retry Logic:** Exponential backoff for transient failures
-- **Message Conversion:** Dict ↔ LangChain message formats
+#### a. Provider contract (`base.py`)
+- **Interface:** `generate()` (full text), `stream()` (real provider deltas), and
+  `generate_response(messages, stream)` used by existing RAG code
+- **Messages:** plain `{"role": "system" | "user" | "assistant", "content": str}` dicts;
+  system messages are split out for providers that take them separately
+- **Errors:** provider SDK exceptions are mapped to `LLMAuthenticationError`,
+  `LLMRateLimitError`, `LLMTimeoutError`, `LLMServiceUnavailableError`,
+  `LLMRefusalError` (all `LLMProviderError`); messages never contain credentials
 
-#### b. Embeddings Client (`embeddings.py`)
+#### b. Provider factory (`provider_factory.py`)
+- Selects the provider from `LLM_PROVIDER` (`azure_openai` default, or `anthropic`)
+- Creates it once per process and reuses it; `close_llm_provider()` runs on
+  application shutdown (FastAPI lifespan) to close the async HTTP client
+
+#### c. Anthropic Claude (`anthropic_claude.py`)
+- `AsyncAnthropic` client; streaming via `messages.stream()` text deltas
+- Retries (connection errors, 408/409/429/5xx with backoff and `retry-after`) and
+  timeouts are the SDK's (`ANTHROPIC_MAX_RETRIES`, `ANTHROPIC_TIMEOUT`); a stream
+  is retried only before its first event
+- Checks `stop_reason`: `refusal` raises `LLMRefusalError` (partial text must be
+  discarded); `max_tokens` with no answer text raises
+- Sends `output_config.effort` (`ANTHROPIC_EFFORT`) and, by default, server-side
+  refusal fallbacks (`fallbacks: "default"`, beta `server-side-fallback-2026-07-01`)
+- **Refusal fallback:** a decline *before* any output is served by the fallback
+  model (Anthropic chooses it per refusal category). A decline *after* partial
+  output raises `LLMRefusalError`: the partial text is discarded and the client
+  gets the standard error event. Non-streaming responses already omit declined text.
+- Does not send `temperature`: current Claude models and API version `2026-10-21`
+  (sent by SDK 2.x) reject sampling parameters
+- **Model compatibility matrix** (`CLAUDE_MODEL_CAPABILITIES`): settings a model
+  does not support are disabled at startup with a warning; unknown models are sent
+  as configured with a warning.
+
+  | Model | `effort` values | Refusal fallback |
+  |---|---|---|
+  | `claude-fable-5-2`, `claude-fable-5-1`, `claude-fable-5`, `claude-mythos-5-2`, `claude-mythos-5-1` | low–max | yes |
+  | `claude-opus-5-5`, `claude-opus-5`, `claude-sonnet-5-5` | low–max | yes |
+  | `claude-sonnet-5`, `claude-haiku-5-5`, `claude-opus-4-8`, `claude-opus-4-7` | low–max | no |
+  | `claude-opus-4-6`, `claude-sonnet-4-6` | low, medium, high, max | no |
+  | `claude-haiku-4-5` | not supported | no |
+
+#### c2. LLM telemetry (`app/core/llm_telemetry.py`)
+Every provider call logs one `llm_call` record (JSON field `llm`): provider,
+requested and served model, input/output/cache tokens (`tokens_estimated` when
+the provider reports none, e.g. Azure streaming), fallback used and fallback
+model, stop reason, latency, provider request ID, status, and a hashed session
+key. Records never contain prompts, answers or credentials. Token totals feed the
+daily budgets below.
+
+#### d. Azure OpenAI Client (`azure_openai.py`)
+- **Streaming:** Async token-by-token generation
+- **Retry Logic:** openai SDK retries inside `AzureChatOpenAI` (default 2)
+- **Message Conversion:** Dict ↔ LangChain message formats
+- Kept as a selectable provider; also exposed as the `azure_openai_client` global
+
+#### e. Embeddings Client (`embeddings.py`)
 - **Batch Processing:** Efficient embedding generation
 - **Retry Logic:** Handles rate limits
 - **Async Operations:** Non-blocking I/O
@@ -195,9 +260,13 @@ Clean → Chunk → Embed → Upsert to Vector DB
 ```
 1. User sends message
    ↓
-2. API validates request
+2. API validates request (message count and size limits → 422)
    ↓
-3. Guardrails check query safety
+3. Guardrails check query safety; an emergency gets the emergency response
+   immediately (no model call, never rate-limited)
+   ↓
+3b. Usage limits: per-IP rate, per-session rate, per-session daily tokens,
+    global daily token budget (→ 429 with Retry-After)
    ↓
 4. RAG chain/graph invoked
    ↓
@@ -209,16 +278,65 @@ Clean → Chunk → Embed → Upsert to Vector DB
    ├─ Practices layer
    └─ Q&A layer
    ↓
-7. Context assembled
+7. Context assembled (wrapped in <retrieved_context> with [Source: ...] labels,
+   plus the request's prior user/assistant turns)
    ↓
-8. LLM generates response
+8. LLM provider generates response (streamed from the provider into a server buffer)
    ↓
-9. Guardrails check response
+9. Guardrails check the complete response; internal [Source: ...] tags removed;
+   disclaimers applied
    ↓
-10. Citations extracted
+10. Sources built from the retrieved documents supplied to the model
    ↓
-11. Stream to client
+11. Approved text sent to client (SSE `content` chunks, `citations`, `[DONE]`)
 ```
+
+**Streaming and safety.** `/api/chat` with `stream: true` never sends model text
+before step 9 finishes. While the response is prepared, the stream carries only
+SSE comments (`: keep-alive`, every `SSE_KEEPALIVE_SECONDS`) so proxies keep the
+connection open. If generation fails or the model refuses partway through, the
+buffered text is discarded and the client receives one `error` event with a
+generic message and the request ID. The SSE event format is unchanged, but the
+first `content` event arrives once the full answer has been generated and
+validated, not token by token. Emergency responses to streaming requests use the
+same SSE events.
+
+**Sources (citations).** The `citations` field lists the documents retrieved from
+Azure AI Search and supplied to the model, built server-side from their metadata
+(`title`, and `page N` or the URL as `reference`; empty when neither exists).
+Retrieval does not prove which source the model relied on, so clients label them
+"Sources". Model-written source names are never trusted: answers are stripped of
+`[Source: ...]` tags, and the graph endpoint validates citations against the
+retrieved documents.
+
+**Emergency policy.** `EMERGENCY_POLICY_FILE` points to a region policy (see
+`emergency_policy.example.json`). Contacts are shown only when the file records
+who approved them and when; extra keywords (e.g. Tamil) are used only when the
+file records a reviewer. Without an approved policy the response tells users to
+contact local emergency services or someone they trust, with no phone numbers.
+Emergency keyword matching is whole-word for English; reviewed policy keywords
+use substring matching (needed for Tamil suffixes). The system prompt also tells
+the model, in any language, not to give meditation guidance to someone in crisis.
+
+**Usage limits.** `app/core/usage.py` counts requests and tokens in memory (one
+process) or Redis (`USAGE_STORE=redis`, falls back to memory if Redis fails). The
+client IP comes from the socket unless `TRUSTED_PROXY_HOPS` is set, in which case
+only that many right-most `X-Forwarded-For` entries are trusted. Sessions are
+identified by the optional `X-Session-ID` header (graph: `thread_id`), falling
+back to the IP. IPs and session IDs are stored and logged only as keyed hashes.
+The public chatbot needs no login; account-specific LMS endpoints require
+authentication as before.
+
+**Graph state retention.** The LangGraph checkpointer is keyed by a fresh
+per-request ID and the checkpoint is deleted after each request, so no
+conversation state stays in memory and a client-supplied `thread_id` (only echoed
+back) cannot address another client's state.
+
+**Conversation history.** Clients send the conversation in `messages`. The last
+user message is the question (and the retrieval query); up to
+`LLM_MAX_HISTORY_MESSAGES` earlier user/assistant turns are forwarded to the
+model. Client `system` messages are dropped. History is never stored server-side
+or shared between requests.
 
 ### Ingestion Flow
 

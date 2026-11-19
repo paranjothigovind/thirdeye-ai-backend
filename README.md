@@ -1,6 +1,8 @@
-# 🧘 Third Eye Meditation AI Chatbot
+# 🧘 Nettrikkan AI Chatbot
 
-An Azure-powered Retrieval-Augmented Generation (RAG) chatbot that provides grounded, compassionate guidance on Third Eye (Ajna) meditation. Built with Python, LangChain/LangGraph, Azure OpenAI, and Azure AI Search.
+A Retrieval-Augmented Generation (RAG) chatbot that answers questions about **Nettrikkan** (Inner Awareness), including *Meyunarvu* (true inner awareness), strictly from the teaching material you ingest. It answers in English or Tamil, only from retrieved sources, and does not start a practice unless the user asks for one. Built with Python, FastAPI, LangChain/LangGraph, Azure AI Search, and either Anthropic Claude or Azure OpenAI for answer generation.
+
+> This repository was previously named after "Third Eye (Ajna) meditation". The system now follows the Nettrikkan framework: natural breath only, no mantras or visualization, witnessing rather than effort. Some resource names (the `thirdeye-ai-backend` repo, the `thirdeye-*` index and `third-eye-*` container defaults) keep the old name for compatibility.
 
 ## ✨ Features
 
@@ -8,9 +10,11 @@ An Azure-powered Retrieval-Augmented Generation (RAG) chatbot that provides grou
 - **Angelitic RAG layering**: canonical teachings, safety/contraindications, practices, Q&A exemplars
 - **Append-only ingestion** for PDFs with versioned upserts
 - **Optional web scraping** when URLs are explicitly provided
-- **Azure OpenAI** for chat generation and embeddings
+- **Choice of generation model**: Anthropic Claude or Azure OpenAI (`LLM_PROVIDER`); embeddings always use Azure OpenAI
 - **Streaming responses** with collapsible citations
-- **Safety guardrails** for responsible meditation guidance
+- **Tamil and English**: replies in Tamil when the question is in Tamil, using the Nettrikkan terms
+- **Query rewriting** to Nettrikkan terminology (e.g. "third eye" → "Nettrikkan", "focus" → "Thaarana") for better retrieval
+- **Safety guardrails** for responsible guidance and emergency situations
 - **Azure-native deployment** with CI/CD
 
 ## 🏗️ Architecture
@@ -36,10 +40,11 @@ An Azure-powered Retrieval-Augmented Generation (RAG) chatbot that provides grou
 - Python 3.11+
 - Docker (optional)
 - Azure account with:
-  - Azure OpenAI Service
+  - Azure OpenAI Service (embeddings always; chat too if `LLM_PROVIDER=azure_openai`)
   - Azure AI Search
   - Azure Blob Storage
   - Azure Key Vault (recommended)
+- An Anthropic API key, only if `LLM_PROVIDER=anthropic` (see below)
 
 ### Local Development
 
@@ -64,6 +69,7 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 # Edit .env with your Azure credentials
+# Also set SECRET_KEY and JWT_SECRET_KEY (required, no defaults; see Configuration)
 ```
 
 5. **Start Redis (for Celery)**
@@ -153,11 +159,19 @@ Content-Type: application/json
 
 {
   "messages": [
-    {"role": "user", "content": "How to practice Trataka safely?"}
+    {"role": "user", "content": "What is Meyunarvu?"}
   ],
   "stream": true
 }
 ```
+
+The last `user` message is the question. Earlier `user`/`assistant` messages are
+optional conversation history; `system` messages from clients are ignored.
+Streamed text is sent only after the full response has passed the safety checks
+(the stream carries `: keep-alive` comments meanwhile). `citations` lists the
+retrieved documents supplied to the model ("Sources"). An optional `X-Session-ID`
+header identifies an anonymous session for usage limits; over-limit requests get
+HTTP 429, oversized requests HTTP 422.
 
 ### Ingest PDF
 ```bash
@@ -174,8 +188,8 @@ Content-Type: application/json
 
 {
   "urls": [
-    "https://example.com/third-eye-guide",
-    "https://example.com/trataka-practice"
+    "https://example.com/nettrikkan-introduction",
+    "https://example.com/nettrikkan-faq"
   ]
 }
 ```
@@ -205,11 +219,20 @@ AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT=text-embedding-ada-002
 # Azure AI Search
 AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
 AZURE_SEARCH_KEY=your-search-key
-AZURE_SEARCH_INDEX=third-eye-docs
+AZURE_SEARCH_INDEX=thirdeye-knowledge-index-v2
 
 # Azure Blob Storage
 AZURE_BLOB_CONNECTION_STRING=your-connection-string
 AZURE_BLOB_CONTAINER=third-eye-pdfs
+
+# Authentication - REQUIRED, no defaults. The app refuses to start without them.
+# Use two different random values (32+ characters), e.g.:
+#   python -c "import secrets; print(secrets.token_urlsafe(48))"
+SECRET_KEY=
+JWT_SECRET_KEY=
+
+# Database (local SQLite file by default; never commit it)
+DATABASE_URL=sqlite:///./thirdeye.db
 
 # Redis
 REDIS_URL=redis://localhost:6379/0
@@ -219,6 +242,71 @@ CHUNK_SIZE=1000
 CHUNK_OVERLAP=150
 TOP_K_RESULTS=6
 ```
+
+See [.env.example](.env.example) for the full list.
+
+### 🤖 LLM provider: Claude or Azure OpenAI
+
+Answer generation goes through one provider, chosen with `LLM_PROVIDER`:
+
+| `LLM_PROVIDER` | Generates answers with | Extra settings needed |
+|---|---|---|
+| `azure_openai` (default) | Azure OpenAI chat deployment | `AZURE_OPENAI_CHAT_*` |
+| `anthropic` | Anthropic Claude | `ANTHROPIC_API_KEY` |
+
+To use Claude, add to `.env` and restart the API:
+
+```bash
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...        # from https://console.anthropic.com
+# Optional (defaults shown)
+ANTHROPIC_MODEL=claude-opus-5-5
+ANTHROPIC_MAX_TOKENS=16000
+ANTHROPIC_TIMEOUT=120               # seconds per attempt
+ANTHROPIC_MAX_RETRIES=2             # SDK retries for 408/409/429/5xx/connection errors
+ANTHROPIC_EFFORT=medium             # low|medium|high|xhigh|max; empty = model default
+ANTHROPIC_REFUSAL_FALLBACK=true     # server-side fallback model if Claude declines (beta)
+LLM_MAX_HISTORY_MESSAGES=10         # prior turns from the request sent to the model
+```
+
+To switch back, set `LLM_PROVIDER=azure_openai` (or remove it) and restart.
+The API refuses to start if `LLM_PROVIDER=anthropic` and `ANTHROPIC_API_KEY` is empty.
+
+What stays on Azure whichever provider you pick: **Azure OpenAI embeddings**
+(`AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT`), **Azure AI Search** (index, vectors and
+hybrid retrieval), **Azure Blob Storage**, plus Redis/Celery for ingestion. The
+Azure chat settings are still required by configuration even when Claude is selected.
+Switching providers does not touch embeddings, the index schema or its vectors.
+
+> **Billing:** Claude API usage is billed per token to your Anthropic Console
+> account (pay-as-you-go API credits). It is separate from a Claude Pro or Max
+> subscription on claude.ai, which does not include API access.
+
+How it fits together: [ARCHITECTURE.md → Models](ARCHITECTURE.md#4-models-appmodels).
+
+### 🚦 Before enabling Claude publicly
+
+The chatbot stays open without login, so set limits first (all in [.env.example](.env.example)):
+
+- `LLM_DAILY_TOKEN_BUDGET`: total tokens per UTC day (0 = unlimited; the app warns at startup)
+- `RATE_LIMIT_IP_PER_MINUTE`, `RATE_LIMIT_SESSION_PER_HOUR`, `SESSION_DAILY_TOKEN_LIMIT`
+- `CHAT_MAX_MESSAGES`, `CHAT_MAX_MESSAGE_CHARS`, `CHAT_MAX_TOTAL_CHARS`
+- `TRUSTED_PROXY_HOPS`: number of reverse proxies that append to `X-Forwarded-For`
+  (keep `0` unless you know the count; a wrong value lets clients spoof their IP)
+- `USAGE_STORE=redis` when running more than one instance
+
+Each LLM call logs one `llm_call` JSON record with tokens, models, fallback use,
+latency and request IDs (never prompts, answers or keys).
+
+### 🚨 Emergency policy
+
+Emergency replies tell users to contact local emergency services or a trusted
+person, without phone numbers, until an approved policy is configured:
+copy [emergency_policy.example.json](emergency_policy.example.json), add only
+contact details verified from official sources and approved by the Netrikkan team
+(with `approved_by` / `approved_on`), and set `EMERGENCY_POLICY_FILE`. Tamil
+emergency keywords go in the same file and are used only once a native Tamil
+speaker is recorded in `keywords.reviewed_by`.
 
 ## 🧪 Testing
 
@@ -232,6 +320,14 @@ pytest tests/ -v
 # With coverage
 pytest tests/ -v --cov=app --cov-report=html
 ```
+
+The Claude integration tests (`tests/test_llm_providers.py`,
+`tests/test_chat_integration.py`) run the real Anthropic SDK against an in-process
+mock HTTP transport. They make no network calls, need no `ANTHROPIC_API_KEY` and
+use no API credits. The test suite still reads the Azure settings from `.env`
+when importing the app. `tests/test_frontend_sse.py` tests the bundled web UI's
+stream parser with Node.js (skipped if `node` is not installed); run it alone with
+`node --test "tests/frontend/*.test.mjs"`.
 
 ## 🚢 Deployment
 
@@ -316,7 +412,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on each deployment 
 
 - Azure OpenAI and Azure AI Search
 - LangChain/LangGraph ecosystem
-- Community best practices for safe meditation guidance
+- The Nettrikkan team and teachers whose material grounds the answers
 
 ## 📞 Support
 
