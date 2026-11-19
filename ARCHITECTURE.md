@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The Third Eye Meditation AI Chatbot is a production-ready RAG (Retrieval-Augmented Generation) system built on Azure services, designed to provide safe, grounded meditation guidance.
+The Nettrikkan AI Chatbot is a production-ready RAG (Retrieval-Augmented Generation) system built on Azure services, designed to provide safe, grounded meditation guidance.
 
 ## High-Level Architecture
 

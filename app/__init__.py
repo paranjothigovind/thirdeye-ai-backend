@@ -1,1 +1,1 @@
-"""Third Eye Meditation AI Chatbot"""
+"""Nettrikkan AI Chatbot"""

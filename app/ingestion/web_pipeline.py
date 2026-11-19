@@ -134,7 +134,7 @@ class WebPipeline:
     def _fetch_url(self, url: str) -> str:
         """Fetch URL content"""
         headers = {
-            "User-Agent": "ThirdEyeMeditationBot/1.0 (Educational purposes)"
+            "User-Agent": "NettrikkanBot/1.0 (Educational purposes)"
         }
         
         response = requests.get(url, headers=headers, timeout=30)

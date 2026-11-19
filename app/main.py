@@ -62,8 +62,8 @@ async def lifespan(_app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     lifespan=lifespan,
-    title="Third Eye Meditation AI Chatbot",
-    description="RAG-powered chatbot for Third Eye (Ajna) meditation guidance",
+    title="Nettrikkan AI Chatbot",
+    description="RAG-powered chatbot for Nettrikkan (Inner Awareness) teachings",
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",

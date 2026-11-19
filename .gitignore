@@ -77,3 +77,6 @@ Untitled-*.ini
 *.db.bak
 *.sqlite
 *.sqlite3
+
+# Editor workspace files
+*.code-workspace

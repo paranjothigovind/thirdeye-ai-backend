@@ -51,7 +51,7 @@ class PostClassSupportAgent:
     
     def _get_system_prompt(self) -> str:
         """Get specialized system prompt for Post-Class Support Agent"""
-        return """You are the Post-Class Support Assistant for the Third Eye Meditation AI Chatbot.
+        return """You are the Post-Class Support Assistant for the Nettrikkan AI Chatbot.
         
         Your role is to assist users with questions and experiences after they have attended a meditation class or completed a course.
         

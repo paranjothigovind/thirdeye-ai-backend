@@ -33,6 +33,28 @@ A Retrieval-Augmented Generation (RAG) chatbot that answers questions about **Ne
 └─────────────┘     └──────────────┘
 ```
 
+### Answer pipeline: corrective RAG with LangGraph
+
+`POST /api/chat/graph` runs a LangGraph state machine (`app/rag/graph.py`). It
+retrieves, checks its own work, and retries before answering:
+
+```
+rewrite_query → retrieve → check_retrieval ─┬─ weak (<2 documents) → rewrite_query   (retry)
+                                            └─ ok → generate → check_response ─┬─ fails check → retrieve   (retry)
+                                                                               └─ ok → add_citations → END
+```
+
+- **rewrite_query** rewrites the question into Nettrikkan terminology (e.g. "third eye" → "Nettrikkan").
+- **retrieve** runs hybrid search on Azure AI Search (BM25 keyword + vector).
+- **check_retrieval** loops back to `rewrite_query` when fewer than 2 documents come back.
+- **generate** answers only from the retrieved excerpts, using the configured LLM provider.
+- **check_response** applies the guardrails (medical advice, missing sources when nothing was retrieved) and loops back to `retrieve` if the answer fails.
+- **add_citations** attaches the sources server-side from the retrieved documents.
+
+Both loops share one retry budget (`max_retries = 2`), so a request cannot loop forever.
+The streaming `POST /api/chat` endpoint uses the simpler chain in `app/rag/chains.py`.
+Checkpoints are kept in memory (`MemorySaver`), see "What I'd do next" below.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -396,6 +418,22 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on each deployment 
 - [API Documentation](http://localhost:8000/api/docs) (Swagger UI)
 - [ReDoc](http://localhost:8000/api/redoc)
 
+## 🔭 What I'd do next
+
+- **Evals:** build a small golden set of English and Tamil questions with expected
+  sources, and measure retrieval hit rate and groundedness, so prompt and retriever
+  changes can be compared instead of judged by eye.
+- **Persistent checkpointer:** the graph uses LangGraph's in-memory `MemorySaver`, so
+  conversation state is lost on restart and not shared between instances. Swap it for a
+  Redis or Postgres checkpointer before running more than one replica.
+- **More tests for the graph itself:** cover each node and both retry loops
+  (weak retrieval, failed response check, retry budget exhausted) with a stubbed
+  retriever and LLM; today most coverage is at the API and provider level.
+- **One chat path:** `/api/chat` (streaming, simple chain) and `/api/chat/graph`
+  (corrective graph) answer differently. Move streaming onto the graph, or retire one.
+- **Real data store:** replace the local SQLite database with Postgres (Alembic
+  migrations are already in place) and keep database files out of the repository.
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -406,7 +444,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on each deployment 
 
 ## 📝 License
 
-[Specify your license here]
+See [LICENSE](LICENSE).
 
 ## 🙏 Acknowledgments
 
@@ -418,7 +456,6 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions on each deployment 
 
 For issues and questions:
 - Open an issue on GitHub
-- Contact: [your-email]
 
 ---
 

@@ -1,4 +1,4 @@
-# Contributing to Third Eye Meditation AI Chatbot
+# Contributing to Nettrikkan AI Chatbot
 
 Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
 

@@ -1,6 +1,6 @@
 # 🚀 Azure Deployment Guide
 
-This guide covers deploying the Third Eye Meditation AI Chatbot to Microsoft Azure using various deployment options.
+This guide covers deploying the Nettrikkan AI Chatbot to Microsoft Azure using various deployment options.
 
 ## 📋 Table of Contents
 

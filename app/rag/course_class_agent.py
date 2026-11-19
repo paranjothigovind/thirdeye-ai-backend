@@ -51,7 +51,7 @@ class CourseClassAgent:
     
     def _get_system_prompt(self) -> str:
         """Get specialized system prompt for Course & Class Agent"""
-        return """You are the Course & Class Assistant for the Third Eye Meditation AI Chatbot.
+        return """You are the Course & Class Assistant for the Nettrikkan AI Chatbot.
         
         Your role is to assist users with questions about meditation courses, classes, workshops, and training programs.
         
